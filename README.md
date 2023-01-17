@@ -41,11 +41,11 @@ jobs:
    - id: create-release
      uses: 'google-github-actions/create-cloud-deploy-release@v1'
       with:
-        name: 'demo-app-${GITHUB_SHA::7}'
-        description: '${{ github.event.head_commit.message }}'
-        delivery_pipeline: '${{ env.PIPELINE }}'
-        region: '${{ env.REGION }}'
-        images: 'demo-app=${{ env.IMAGE }}'
+        name: 'demo-app-v1.2.3'
+        description: 'Add new functionality to demo-app'
+        delivery_pipeline: 'demo-app-pipeline'
+        region: 'us-central1'
+        images: 'demo-app=us-central1-docker.pkg.dev/demo-app-project/demo-app-repo/demo-app:v1.2.3'
         source: 'demo-app'
 ```
 
@@ -70,7 +70,7 @@ jobs:
 
     ```yaml
     with:
-      images: |
+      images: |-
         image1=image.repo/path/to/image1:v1@sha256:45db24
         image2=image.repo/path/to/image2:v1@sha256:f32780
     ```
@@ -88,7 +88,7 @@ jobs:
 
     ```yaml
     with:
-      annotations: |
+      annotations: |-
         annotation1=value1
         annotation2=value2
     ```
@@ -105,7 +105,7 @@ jobs:
 
     ```yaml
     with:
-      labels: |
+      labels: |-
         label1=value1
         label2=value2
     ```
@@ -134,7 +134,7 @@ jobs:
 
 -   `gcloud_version`: (Optional) Version of the Cloud SDK to install. If
     unspecified or set to "latest", the latest available gcloud SDK version for
-    the target platform will be installed. Example`: "290.0.1".
+    the target platform will be installed. Example: "290.0.1".
 
 -   `gcloud_component`: (Optional) Version of the Cloud SDK components to
     install and use. If unspecified, the latest or released version will be
@@ -175,7 +175,7 @@ The service account used by Cloud Deploy additionally needs permisisons that
 allow deployment of a service to your target runtime, [GKE][gke] or
 [Cloud Run][cloud-run], as described in the following sections.
 
-### Cloud Run
+### Cloud Run Authorization
 
 To deploy to Cloud Run, the service account used by Cloud Deploy needs the following permissions:
 
@@ -190,7 +190,7 @@ account, depending on your configuration. To grant a user permissions for a
 service account, use one of the methods found in [Configuring Ownership and
 access to a service account](https://cloud.google.com/iam/docs/granting-roles-to-service-accounts#granting_access_to_a_user_for_a_service_account)
 
-### GKE
+### GKE Authorization
 
 To deploy to GKE, the service account used by Cloud Deploy needs the following permissions:
 
@@ -256,7 +256,7 @@ Credentials.
 We recommend pinning to the latest available major version:
 
 ```yaml
-- uses: 'google-github-actions/deploy-cloudrun@v1'
+- uses: 'google-github-actions/create-cloud-deploy-release@v1'
 ```
 
 While this action attempts to follow semantic versioning, but we're ultimately
@@ -264,7 +264,7 @@ human and sometimes make mistakes. To prevent accidental breaking changes, you
 can also pin to a specific version:
 
 ```yaml
-- uses: 'google-github-actions/deploy-cloudrun@v1.0.0'
+- uses: 'google-github-actions/create-cloud-deploy-release@v1.0.0'
 ```
 
 However, you will not get automatic security updates or new features without
