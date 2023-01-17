@@ -36,8 +36,7 @@
     "@actions/github": "^5.1.1",
     "@actions/tool-cache": "^2.0.1",
     "@google-github-actions/actions-utils": "^0.4.6",
-    "@google-github-actions/setup-cloud-sdk": "^1.0.1",
-    "uuid": "^9.0.0"
+    "@google-github-actions/setup-cloud-sdk": "^1.0.1"
   },
   "devDependencies": {
     "@types/chai": "^4.3.4",
