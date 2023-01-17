@@ -91,8 +91,6 @@ export async function run(): Promise<void> {
     const gcloudComponent = presence(getInput('gcloud_component'));
     const gcloudVersion = await computeGcloudVersion(getInput('gcloud_version'));
 
-    let cmd;
-
     // Throw errors if inputs aren't valid
     if (!name) {
       throw new Error('No release name set.');
@@ -116,7 +114,7 @@ export async function run(): Promise<void> {
     }
 
     // Build base command from required inputs
-    cmd = [
+    let cmd = [
       'deploy',
       'releases',
       'create',
