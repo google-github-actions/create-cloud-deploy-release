@@ -23,7 +23,7 @@ import { errorMessage, presence } from '@google-github-actions/actions-utils';
  * into a common object
  *
  * @param stdout
- * @returns DeployCloudRunOutputs
+ * @returns CreateCloudDeployReleaseOutputs
  */
 export function parseCreateReleaseResponse(
   stdout: string | undefined,

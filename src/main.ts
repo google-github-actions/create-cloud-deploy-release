@@ -52,7 +52,7 @@ import { parseCreateReleaseResponse } from './output-parser';
 const { version: appVersion } = require('../package.json');
 
 /**
- * DeployCloudRunOutputs are the common GitHub action outputs created by this action
+ * CreateCloudDeployReleaseOutputs are the common GitHub action outputs created by this action
  */
 export interface CreateCloudDeployReleaseOutputs {
   name?: string | null | undefined; // Match clouddeploy_v1.Schema$Release.name
