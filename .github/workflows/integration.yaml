@@ -22,15 +22,6 @@ jobs:
     if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
     runs-on: 'ubuntu-latest'
 
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-        - name: 'image'
-          image: 'gcr.io/cloudrun/hello:latest'
-
-    name: 'from_${{ matrix.name }}'
-
     steps:
     - id: 'checkout'
       name: 'Checkout'
@@ -39,7 +30,7 @@ jobs:
     - id: 'compute-test-uid'
       name: 'Compute test UID'
       run: |-
-        echo "TEST_UID=${GITHUB_JOB}-${{ matrix.name }}-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> ${GITHUB_ENV}
+        echo "TEST_UID=${GITHUB_JOB}-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> ${GITHUB_ENV}
 
     - id: 'set-up-node'
       name: 'Set up Node'
@@ -64,18 +55,18 @@ jobs:
       with:
         project_id: ${{ secrets.PROJECT_ID }}
 
-    - id: 'configure-pipeline'
-      name: 'Configure deployment pipeline'
-      run: 'for template in $(ls tests/fixtures/*.template); do envsubst < ${template} > ${template%.*} ; done'
+    - id: 'populate-pipeline-template'
+      name: 'Populate values in template for Cloud Deploy pipeline and target'
+      run: 'envsubst < tests/fixtures/clouddeploy.yaml.template > tests/fixtures/clouddeploy.yaml'
       env:
-        PROJECT_ID: ${{ secrets.PROJECT_ID }}
-        REGION: ${{ secrets.REGION }}
+        PROJECT_ID: '${{ secrets.PROJECT_ID }}'
+        REGION: '${{ secrets.REGION }}'
 
     - id: 'create-pipeline'
       name: 'Create pipeline'
       run: 'gcloud deploy apply --file=tests/fixtures/clouddeploy.yaml --region=${REGION}'
       env:
-        REGION: ${{ secrets.REGION }}
+        REGION: '${{ secrets.REGION }}'
 
     - id: 'create-release'
       name: 'Create Release'
@@ -83,9 +74,9 @@ jobs:
       with:
         name: '${{ env.TEST_UID }}'
         region: '${{ secrets.REGION }}'
-        delivery_pipeline: gha-test-pipeline
+        delivery_pipeline: 'gha-test-pipeline'
         source: 'tests/fixtures/'
-        images: 'gha-test-app=${{ matrix.image }}'
+        images: 'gha-test-app=gcr.io/cloudrun/hello:latest'
         description: 'GHA test ${{ env.TEST_UID }}'
         disable_initial_rollout: true
         labels: |-
@@ -100,7 +91,7 @@ jobs:
         ANNOTATIONS: '{"git-sha":"${{ github.sha }}", "annotation1":"value1"}'
         DELIVERY_PIPELINE: 'gha-test-pipeline'
         DESCRIPTION: 'GHA test ${{ env.TEST_UID }}'
-        IMAGES: 'gha-test-app=${{ matrix.image }}'
+        IMAGES: 'gha-test-app=gcr.io/cloudrun/hello:latest'
         LABELS: '{"managed-by":"github-actions", "label1":"value1"}'
         NAME: 'projects/${{ secrets.PROJECT_ID }}/locations/${{ secrets.REGION }}/deliveryPipelines/gha-test-pipeline/releases/${{ env.TEST_UID }}'
         PROJECT_ID: '${{ secrets.PROJECT_ID }}'
