@@ -107,11 +107,6 @@ describe('#run', function () {
     expectError(run, 'No delivery pipeline set.');
   });
 
-  it('fails if region is not provided', async function () {
-    this.stubs.getInput.withArgs('region').returns('');
-    expectError(run, 'No region set.');
-  });
-
   it('fails if neither build-artifacts nor images are provided', async function () {
     this.stubs.getInput.withArgs('build_artifacts').returns('');
     this.stubs.getInput.withArgs('images').returns('');
@@ -122,6 +117,15 @@ describe('#run', function () {
     this.stubs.getInput.withArgs('build_artifacts').returns('artifacts.json');
     this.stubs.getInput.withArgs('images').returns('image1=image1:tag1');
     expectError(run, 'Both `build_artifacts` and `images` inputs set - please select only one.');
+  });
+
+  it('sets region if given', async function () {
+    this.stubs.getInput.withArgs('region').returns('europe-west1');
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--region', 'europe-west1']);
   });
 
   it('sets build-artifacts if given', async function () {
@@ -233,7 +237,7 @@ describe('#run', function () {
     expect(args).to.include.members(['--labels', kvToString(expectedLabels)]);
   });
 
-  it('sets default and additional labels', async function () {
+  it('sets default and additional labels if given', async function () {
     this.stubs.getInput.withArgs('labels').returns('label_key=label_value');
 
     const expectedLabels = {
