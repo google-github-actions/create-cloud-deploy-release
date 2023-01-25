@@ -21,12 +21,11 @@ import * as sinon from 'sinon';
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
-import * as utils from '../../src/utils';
 
 import { TestToolCache } from '@google-github-actions/setup-cloud-sdk';
 import { errorMessage } from '@google-github-actions/actions-utils';
 
-import { run } from '../../src/main';
+import { kvToString, run } from '../../src/main';
 
 // These are mock data for github actions inputs, where camel case is expected.
 const fakeInputs: { [key: string]: string } = {
@@ -66,12 +65,6 @@ describe('#run', function () {
       getExecOutput: sinon
         .stub(exec, 'getExecOutput')
         .resolves({ exitCode: 0, stderr: '', stdout: '{}' }),
-      getDefaultAnnotations: sinon
-        .stub(utils, 'getDefaultAnnotations')
-        .returns({ DEFAULT_ANNOTATION_KEY: 'default_annotation_value' }),
-      getDefaultLabels: sinon
-        .stub(utils, 'getDefaultLabels')
-        .returns({ DEFAULT_LABEL_KEY: 'default_label_value' }),
     };
 
     sinon.stub(core, 'setFailed').throwsArg(0); // make setFailed throw exceptions
@@ -86,7 +79,9 @@ describe('#run', function () {
   afterEach(async function () {
     Object.keys(this.stubs).forEach((k) => this.stubs[k].restore());
     sinon.restore();
+    delete process.env.GITHUB_REPOSITORY;
     delete process.env.GITHUB_SHA;
+    delete process.env.GITHUB_SERVER_URL;
     await TestToolCache.stop();
   });
 
@@ -185,28 +180,72 @@ describe('#run', function () {
     expect(args).to.include.members(['--skaffold-file', 'path/to/skaffold.yaml']);
   });
 
-  it('sets annotations if given', async function () {
-    this.stubs.getInput.withArgs('annotations').returns('ANNOTATION_KEY=annotation_value');
+  it('sets default annotations', async function () {
+    this.stubs.getInput.withArgs('annotations').returns('');
+
+    process.env.GITHUB_REPOSITORY = 'test-org/test-repo';
+    process.env.GITHUB_SERVER_URL = 'https://github.com';
+    process.env.GITHUB_SHA = 'abcdef123456';
+
+    const expectedAnnotations = {
+      'commit': 'https://github.com/test-org/test-repo/commit/abcdef123456',
+      'git-sha': 'abcdef123456',
+    };
+
     await run();
     const call = this.stubs.getExecOutput.getCall(0);
     expect(call).to.be;
     const args = call.args[1];
-    expect(args).to.include.members([
-      '--annotations',
-      'DEFAULT_ANNOTATION_KEY=default_annotation_value,ANNOTATION_KEY=annotation_value',
-    ]);
+    expect(args).to.include.members(['--annotations', kvToString(expectedAnnotations)]);
   });
 
-  it('sets labels if given', async function () {
-    this.stubs.getInput.withArgs('labels').returns('LABEL_KEY=label_value');
+  it('sets default and additional annotations if given', async function () {
+    this.stubs.getInput.withArgs('annotations').returns('annotation_key=annotation_value');
+
+    process.env.GITHUB_REPOSITORY = 'test-org/test-repo';
+    process.env.GITHUB_SERVER_URL = 'https://github.com';
+    process.env.GITHUB_SHA = 'abcdef123456';
+
+    const expectedAnnotations = {
+      'commit': 'https://github.com/test-org/test-repo/commit/abcdef123456',
+      'git-sha': 'abcdef123456',
+      'annotation_key': 'annotation_value',
+    };
+
     await run();
     const call = this.stubs.getExecOutput.getCall(0);
     expect(call).to.be;
     const args = call.args[1];
-    expect(args).to.include.members([
-      '--labels',
-      'DEFAULT_LABEL_KEY=default_label_value,LABEL_KEY=label_value',
-    ]);
+    expect(args).to.include.members(['--annotations', kvToString(expectedAnnotations)]);
+  });
+
+  it('sets default labels', async function () {
+    this.stubs.getInput.withArgs('labels').returns('');
+
+    const expectedLabels = {
+      'managed-by': 'github-actions',
+    };
+
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--labels', kvToString(expectedLabels)]);
+  });
+
+  it('sets default and additional labels', async function () {
+    this.stubs.getInput.withArgs('labels').returns('label_key=label_value');
+
+    const expectedLabels = {
+      'managed-by': 'github-actions',
+      'label_key': 'label_value',
+    };
+
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--labels', kvToString(expectedLabels)]);
   });
 
   it('sets description if given', async function () {
@@ -247,6 +286,33 @@ describe('#run', function () {
     this.stubs.getInput.withArgs('gcloud_component').returns('beta');
     await run();
     expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+  });
+});
+
+describe('#kvToString', () => {
+  const cases = [
+    {
+      name: `empty`,
+      input: {},
+      exp: ``,
+    },
+    {
+      name: `single item`,
+      input: { FOO: 'bar' },
+      exp: `FOO=bar`,
+    },
+    {
+      name: `multiple items`,
+      input: { FOO: 'bar', ZIP: 'zap' },
+      exp: `FOO=bar,ZIP=zap`,
+    },
+  ];
+
+  cases.forEach((tc) => {
+    it(tc.name, () => {
+      const result = kvToString(tc.input as Record<string, string>);
+      expect(result).to.eql(tc.exp);
+    });
   });
 });
 

@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-import { context } from '@actions/github';
 import { KVPair } from '@google-github-actions/actions-utils';
 
-type GithubContext = typeof context;
-
 // Generate default annotations as list of key-value pair
-export function getDefaultAnnotations({ repo, serverUrl, sha }: GithubContext): KVPair {
+export function getDefaultAnnotations(): KVPair {
   const annotations: KVPair = {};
-  annotations['commit'] = `${serverUrl}/${repo.owner}/${repo.repo}/commit/${sha}`;
-  annotations['git-sha'] = `${sha}`;
+  annotations[
+    'commit'
+  ] = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/commit/${process.env.GITHUB_SHA}`;
+  annotations['git-sha'] = `${process.env.GITHUB_SHA}`;
 
   return annotations;
 }

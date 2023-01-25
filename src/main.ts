@@ -44,7 +44,6 @@ import {
   installGcloudSDK,
   isInstalled as isGcloudInstalled,
 } from '@google-github-actions/setup-cloud-sdk';
-import { context } from '@actions/github';
 import { getDefaultAnnotations, getDefaultLabels } from './utils';
 import { parseCreateReleaseResponse } from './output-parser';
 
@@ -143,14 +142,13 @@ export async function run(): Promise<void> {
     if (skaffoldFile) {
       cmd.push('--skaffold-file', skaffoldFile);
     }
-    if (annotations) {
-      const allAnnotations = Object.assign({}, getDefaultAnnotations(context), annotations);
-      cmd.push('--annotations', kvToString(allAnnotations));
-    }
-    if (labels) {
-      const allLabels = Object.assign({}, getDefaultLabels(), labels);
-      cmd.push('--labels', kvToString(allLabels));
-    }
+
+    const allAnnotations = Object.assign({}, getDefaultAnnotations(), annotations);
+    cmd.push('--annotations', kvToString(allAnnotations));
+
+    const allLabels = Object.assign({}, getDefaultLabels(), labels);
+    cmd.push('--labels', kvToString(allLabels));
+
     if (description) {
       cmd.push('--description', description);
     }
