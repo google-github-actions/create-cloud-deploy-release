@@ -70,7 +70,7 @@ jobs:
       run: 'gcloud deploy apply --file=tests/fixtures/clouddeploy.yaml --region=${REGION}'
 
     - id: 'create-release'
-      name: 'Create Release'
+      name: 'Create release'
       uses: './'
       with:
         name: '${{ env.TEST_UID }}'
@@ -84,6 +84,12 @@ jobs:
           label1=value1
         annotations: |-
           annotation1=value1
+
+    - id: 'report-release'
+      name: 'Report Cloud Deploy release'
+      run: |-
+        echo "Created release: ${{ steps.create-release.outputs.name }}"
+        echo "Release link: ${{ steps.create-release.outputs.link }}"
 
     - id: 'run-e2e-tests'
       name: 'Run Tests'

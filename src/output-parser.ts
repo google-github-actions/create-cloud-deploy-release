@@ -34,11 +34,13 @@ export function parseCreateReleaseResponse(
       return {};
     }
 
-    const outputJSON: clouddeploy_v1.Schema$Release = JSON.parse(stdout)[0];
-    const name = outputJSON?.name;
+    const outputJSON: clouddeploy_v1.Schema$Release = JSON.parse(stdout);
+    const name = Array.isArray(outputJSON) ? outputJSON[0].name : outputJSON.name;
 
     if (!name) {
-      return {};
+      throw new Error(
+        `couldn't parse release name from create release response, stdout: ${stdout}`,
+      );
     }
 
     const nameSplit = name.split('/');

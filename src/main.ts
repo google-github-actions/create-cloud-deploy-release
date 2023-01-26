@@ -200,7 +200,12 @@ export async function run(): Promise<void> {
 
     const outputs: CreateCloudDeployReleaseOutputs = parseCreateReleaseResponse(output.stdout);
 
-    setActionOutputs(outputs);
+    if (outputs.name) {
+      setOutput('name', outputs.name);
+    }
+    if (outputs.link) {
+      setOutput('link', outputs.link);
+    }
   } catch (err) {
     const msg = errorMessage(err);
     setFailed(`create-cloud-deploy-release failed with: ${msg}`);
@@ -218,16 +223,6 @@ export function kvToString(kv: Record<string, string>, separator = ','): string 
       return `${k}=${v}`;
     })
     .join(separator);
-}
-
-/**
- *  Map output response to GitHub Action outputs
- */
-export function setActionOutputs(outputs: CreateCloudDeployReleaseOutputs): void {
-  Object.keys(outputs).forEach((key: string) => {
-    logInfo(`Setting output key ${key}`);
-    setOutput(key, outputs[key as keyof CreateCloudDeployReleaseOutputs]);
-  });
 }
 
 /**
