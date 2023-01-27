@@ -146,7 +146,7 @@ jobs:
 -   `name`: The full name of the release in Cloud Deploy, including project and
     pipeline names, as well as the chosen name of the release itself.
 
--   `link`: A link to the Cloud Deloy release in the Google Cloud Web Console.
+-   `link`: A link to the Cloud Deploy release in the Google Cloud Web Console.
 
 ## Authorization
 

@@ -109,7 +109,7 @@ outputs:
 
   link:
     description:
-      A link to the Cloud Deloy release in the Google Cloud Web Console.
+      A link to the Cloud Deploy release in the Google Cloud Web Console.
 
 branding:
   icon: 'chevrons-right'
