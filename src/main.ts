@@ -71,7 +71,7 @@ export async function run(): Promise<void> {
 
   // Warn if pinned to HEAD
   if (isPinnedToHead()) {
-    logWarning(pinnedToHeadWarning('v1'));
+    logWarning(pinnedToHeadWarning('v0'));
   }
   try {
     // Core inputs (required)
@@ -89,7 +89,7 @@ export async function run(): Promise<void> {
     const description = getInput('description');
     const flags = getInput('flags');
     const gcloudComponent = presence(getInput('gcloud_component'));
-    const gcloudVersion = await computeGcloudVersion(getInput('gcloud_version'));
+    const gcloudVersion = getInput('gcloud_version');
 
     // Throw errors if inputs aren't valid
     if (!name) {
@@ -162,10 +162,12 @@ export async function run(): Promise<void> {
     cmd.push('--format', 'json');
 
     // Install gcloud if not already installed.
-    if (!isGcloudInstalled(gcloudVersion)) {
-      await installGcloudSDK(gcloudVersion);
+    const gcloudVersionRequired = gcloudVersion ? gcloudVersion : await getLatestGcloudSDKVersion();
+
+    if (!isGcloudInstalled(gcloudVersionRequired)) {
+      await installGcloudSDK(gcloudVersionRequired);
     } else {
-      const toolPath = toolCache.find('gcloud', gcloudVersion);
+      const toolPath = toolCache.find('gcloud', gcloudVersionRequired);
       addPath(path.join(toolPath, 'bin'));
     }
 
@@ -210,18 +212,6 @@ export async function run(): Promise<void> {
   } finally {
     restoreEnv();
   }
-}
-
-/**
- * computeGcloudVersion computes the appropriate gcloud version for the given
- * string.
- */
-async function computeGcloudVersion(str: string): Promise<string> {
-  str = (str || '').trim();
-  if (str === '' || str === 'latest') {
-    return await getLatestGcloudSDKVersion();
-  }
-  return str;
 }
 
 if (require.main === module) {
