@@ -30,6 +30,7 @@ import * as toolCache from '@actions/tool-cache';
 import {
   errorMessage,
   isPinnedToHead,
+  joinKVString,
   parseFlags,
   parseKVString,
   pinnedToHeadWarning,
@@ -128,7 +129,7 @@ export async function run(): Promise<void> {
       cmd.push('--build-artifacts', buildArtifacts);
     }
     if (images && Object.keys(images).length > 0) {
-      cmd.push('--images', kvToString(images));
+      cmd.push('--images', joinKVString(images));
     }
     if (source) {
       cmd.push('--source', source);
@@ -144,10 +145,10 @@ export async function run(): Promise<void> {
     }
 
     const allAnnotations = Object.assign({}, getDefaultAnnotations(), annotations);
-    cmd.push('--annotations', kvToString(allAnnotations));
+    cmd.push('--annotations', joinKVString(allAnnotations));
 
     const allLabels = Object.assign({}, getDefaultLabels(), labels);
-    cmd.push('--labels', kvToString(allLabels));
+    cmd.push('--labels', joinKVString(allLabels));
 
     if (description) {
       cmd.push('--description', description);
@@ -212,17 +213,6 @@ export async function run(): Promise<void> {
   } finally {
     restoreEnv();
   }
-}
-
-/**
- * Convert string=string records into a single string for the gcloud CLI
- */
-export function kvToString(kv: Record<string, string>, separator = ','): string {
-  return Object.entries(kv)
-    .map(([k, v]) => {
-      return `${k}=${v}`;
-    })
-    .join(separator);
 }
 
 /**

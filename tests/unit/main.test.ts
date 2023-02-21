@@ -23,9 +23,9 @@ import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 
 import { TestToolCache } from '@google-github-actions/setup-cloud-sdk';
-import { errorMessage } from '@google-github-actions/actions-utils';
+import { errorMessage, joinKVString } from '@google-github-actions/actions-utils';
 
-import { kvToString, run } from '../../src/main';
+import { run } from '../../src/main';
 
 // These are mock data for github actions inputs, where camel case is expected.
 const fakeInputs: { [key: string]: string } = {
@@ -200,7 +200,7 @@ describe('#run', function () {
     const call = this.stubs.getExecOutput.getCall(0);
     expect(call).to.be;
     const args = call.args[1];
-    expect(args).to.include.members(['--annotations', kvToString(expectedAnnotations)]);
+    expect(args).to.include.members(['--annotations', joinKVString(expectedAnnotations)]);
   });
 
   it('sets default and additional annotations if given', async function () {
@@ -220,7 +220,7 @@ describe('#run', function () {
     const call = this.stubs.getExecOutput.getCall(0);
     expect(call).to.be;
     const args = call.args[1];
-    expect(args).to.include.members(['--annotations', kvToString(expectedAnnotations)]);
+    expect(args).to.include.members(['--annotations', joinKVString(expectedAnnotations)]);
   });
 
   it('sets default labels', async function () {
@@ -234,7 +234,7 @@ describe('#run', function () {
     const call = this.stubs.getExecOutput.getCall(0);
     expect(call).to.be;
     const args = call.args[1];
-    expect(args).to.include.members(['--labels', kvToString(expectedLabels)]);
+    expect(args).to.include.members(['--labels', joinKVString(expectedLabels)]);
   });
 
   it('sets default and additional labels if given', async function () {
@@ -249,7 +249,7 @@ describe('#run', function () {
     const call = this.stubs.getExecOutput.getCall(0);
     expect(call).to.be;
     const args = call.args[1];
-    expect(args).to.include.members(['--labels', kvToString(expectedLabels)]);
+    expect(args).to.include.members(['--labels', joinKVString(expectedLabels)]);
   });
 
   it('sets description if given', async function () {
@@ -290,33 +290,6 @@ describe('#run', function () {
     this.stubs.getInput.withArgs('gcloud_component').returns('beta');
     await run();
     expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
-  });
-});
-
-describe('#kvToString', () => {
-  const cases = [
-    {
-      name: `empty`,
-      input: {},
-      exp: ``,
-    },
-    {
-      name: `single item`,
-      input: { FOO: 'bar' },
-      exp: `FOO=bar`,
-    },
-    {
-      name: `multiple items`,
-      input: { FOO: 'bar', ZIP: 'zap' },
-      exp: `FOO=bar,ZIP=zap`,
-    },
-  ];
-
-  cases.forEach((tc) => {
-    it(tc.name, () => {
-      const result = kvToString(tc.input as Record<string, string>);
-      expect(result).to.eql(tc.exp);
-    });
   });
 });
 
