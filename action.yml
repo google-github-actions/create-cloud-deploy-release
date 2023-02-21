@@ -31,7 +31,6 @@ inputs:
   region:
     description: |-
       Region in which the delivery pipeline can be found.
-    default: us-central1
     required: false
 
   source:

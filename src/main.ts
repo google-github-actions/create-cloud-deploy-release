@@ -98,9 +98,6 @@ export async function run(): Promise<void> {
     if (!deliveryPipeline) {
       throw new Error('No delivery pipeline set.');
     }
-    if (!region) {
-      throw new Error('No region set.');
-    }
     if (!buildArtifacts && !images) {
       throw new Error('One of `build_artifacts` and `images` inputs must be supplied.');
     }
@@ -114,16 +111,16 @@ export async function run(): Promise<void> {
     }
 
     // Build base command from required inputs
-    let cmd = [
-      'deploy',
-      'releases',
-      'create',
-      name,
-      '--delivery-pipeline',
-      deliveryPipeline,
-      '--region',
-      region,
-    ];
+    let cmd = ['deploy', 'releases', 'create', name, '--delivery-pipeline', deliveryPipeline];
+
+    if (region) {
+      cmd.push('--region', region);
+    } else {
+      logWarning(
+        'No region set, using gcloud default ("deploy/region"). ' +
+          'If this fails, specify a region in action.yml.',
+      );
+    }
 
     if (buildArtifacts) {
       cmd.push('--build-artifacts', buildArtifacts);
