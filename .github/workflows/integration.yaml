@@ -18,7 +18,7 @@ permissions:
   id-token: 'write'
 
 env:
-  REGION: us-central1
+  REGION: 'us-central1'
 
 jobs:
   test:
@@ -54,9 +54,9 @@ jobs:
 
     - id: 'gcloud-setup'
       name: 'Set up Cloud SDK'
-      uses: google-github-actions/setup-gcloud@v0
+      uses: 'google-github-actions/setup-gcloud@main'
       with:
-        project_id: ${{ secrets.PROJECT_ID }}
+        project_id: '${{ secrets.PROJECT_ID }}'
 
     - id: 'populate-pipeline-template'
       name: 'Populate values in template for Cloud Deploy pipeline and target'
