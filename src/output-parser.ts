@@ -38,12 +38,22 @@ export function parseCreateReleaseResponse(
     const name = Array.isArray(outputJSON) ? outputJSON[0].name : outputJSON.name;
 
     if (!name) {
-      throw new Error(
-        `couldn't parse release name from create release response, stdout: ${stdout}`,
-      );
+      throw new Error(`couldn't parse release name`);
     }
 
+    /**
+     * The release name format is defined in the Cloud Deploy API spec:
+     * https://cloud.google.com/deploy/docs/api/reference/rest/v1/projects.locations.deliveryPipelines.releases#Release
+     * Example:
+     * projects/{project}/locations/{location}/deliveryPipelines/{deliveryPipeline}/releases/[a-z][a-z0-9-]{0,62}
+     */
+    const RELEASE_NAME_NUM_FIELDS = 8;
     const nameSplit = name.split('/');
+
+    if (nameSplit.length != RELEASE_NAME_NUM_FIELDS) {
+      throw new Error(`couldn't parse release name, unexpected format: ${name}`);
+    }
+
     const linkPrefix = 'https://console.cloud.google.com/deploy/delivery-pipelines';
     const link = `${linkPrefix}/${nameSplit[3]}/${nameSplit[5]}/releases/${nameSplit[7]}?project=${nameSplit[1]}`;
     const outputs: CreateCloudDeployReleaseOutputs = { name: name, link: link };
