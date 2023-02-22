@@ -51,11 +51,10 @@ jobs:
 
 ## Inputs
 
--   `name`: (Required) The name of the release.
+-   `name`: (Required) The name for the release.
 
--   `delivery_pipeline` (Required): The delivery pipeline to use for the release.
-
--   `region`: (Required) Region of the delivery pipeline.
+-   `delivery_pipeline` (Required): The [delivery pipeline][cd-pipeline] to use
+    for the release.
 
 -   `source`: (Required) The location of the files to be included in the
     release; typically application configuration manifests.
@@ -74,6 +73,10 @@ jobs:
         image1=image.repo/path/to/image1:v1@sha256:45db24
         image2=image.repo/path/to/image2:v1@sha256:f32780
     ```
+
+-   `region`: (Optional) Region of the delivery pipeline. If not supplied, a
+    previously configured `gcloud` setting using `deploy/region` is required,
+    for example `gcloud config set deploy/region [REGION]`.
 
 -   `disable_initial_rollout`: (Optional) Prevent the release being deployed to
     the first target in the delivery pipeline.
@@ -98,7 +101,7 @@ jobs:
 
     ```text
     git-sha: ecdeca633a230bfade4cc8195ae23af030922319
-    commit: https://github.com/my-org/my-app/commit/ecdeca633a230bfade4cc8195ae23af030922319
+    commit: <commit>
     ```
 
 -   `labels`: (Optional) Add additional labels to the release.
