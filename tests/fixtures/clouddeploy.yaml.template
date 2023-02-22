@@ -12,20 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: deploy.cloud.google.com/v1
-kind: DeliveryPipeline
+apiVersion: 'deploy.cloud.google.com/v1'
+kind: 'DeliveryPipeline'
 metadata:
-  name: gha-test-pipeline
-description: Deployment pipeline for GitHub Action tests
+  name: 'gha-test-pipeline'
+description: 'Deployment pipeline for GitHub Action tests'
 serialPipeline:
   stages:
-  - targetId: gha-test-target
-    profiles: [gha-test]
+  - targetId: 'gha-test-target'
+    profiles: '[gha-test]'
 ---
 apiVersion: deploy.cloud.google.com/v1
-kind: Target
+kind: 'Target'
 metadata:
-  name: gha-test-target
-description: GitHub Action test target
+  name: 'gha-test-target'
+description: 'GitHub Action test target'
 run:
-  location: projects/${PROJECT_ID}/locations/${REGION}
+  location: 'projects/${PROJECT_ID}/locations/${REGION}'

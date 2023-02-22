@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-apiVersion: skaffold/v3alpha1
-kind: Config
+apiVersion: 'skaffold/v3alpha1'
+kind: 'Config'
 metadata:
-  name: gha-test
+  name: 'gha-test'
 profiles:
-- name: gha-test
+- name: 'gha-test'
   manifests:
     rawYaml:
-    - gha-test-app.yaml
+    - 'gha-test-app.yaml'
 deploy:
   cloudrun: {}
