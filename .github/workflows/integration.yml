@@ -1,0 +1,105 @@
+name: 'Integration'
+
+on:
+  push:
+    branches:
+    - 'main'
+  pull_request:
+    branches:
+    - 'main'
+  workflow_dispatch:
+
+concurrency:
+  group: '${{ github.workflow }}-${{ github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+permissions:
+  contents: 'read'
+  id-token: 'write'
+
+env:
+  REGION: 'us-central1'
+
+jobs:
+  test:
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
+    runs-on: 'ubuntu-latest'
+
+    steps:
+    - id: 'checkout'
+      name: 'Checkout'
+      uses: 'actions/checkout@v3'
+
+    - id: 'compute-test-uid'
+      name: 'Compute test UID'
+      run: |-
+        echo "TEST_UID=${GITHUB_JOB}-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> ${GITHUB_ENV}
+
+    - id: 'set-up-node'
+      name: 'Set up Node'
+      uses: 'actions/setup-node@v3'
+      with:
+        node-version: '16.x'
+
+    - id: 'build'
+      name: 'Build'
+      run: 'npm ci && npm run build'
+
+    - id: 'auth'
+      name: 'Auth'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        workload_identity_provider: '${{ secrets.WIF_PROVIDER_NAME }}'
+        service_account: '${{ secrets.SERVICE_ACCOUNT_EMAIL }}'
+
+    - id: 'gcloud-setup'
+      name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@main'
+      with:
+        project_id: '${{ secrets.PROJECT_ID }}'
+
+    - id: 'populate-pipeline-template'
+      name: 'Populate values in template for Cloud Deploy pipeline and target'
+      run: 'envsubst < tests/fixtures/clouddeploy.yaml.template > tests/fixtures/clouddeploy.yaml'
+      env:
+        PROJECT_ID: '${{ secrets.PROJECT_ID }}'
+        REGION: '${{ env.REGION }}'
+
+    - id: 'create-pipeline'
+      name: 'Create pipeline'
+      run: 'gcloud deploy apply --file=tests/fixtures/clouddeploy.yaml --region=${REGION}'
+
+    - id: 'create-release'
+      name: 'Create release'
+      uses: './'
+      with:
+        name: '${{ env.TEST_UID }}'
+        region: '${{ env.REGION }}'
+        delivery_pipeline: 'gha-test-pipeline'
+        source: 'tests/fixtures/'
+        images: 'gha-test-app=gcr.io/cloudrun/hello:latest'
+        description: 'GHA test ${{ env.TEST_UID }}'
+        disable_initial_rollout: true
+        labels: |-
+          label1=value1
+        annotations: |-
+          annotation1=value1
+
+    - id: 'report-release'
+      name: 'Report Cloud Deploy release'
+      run: |-
+        echo "Created release: ${{ steps.create-release.outputs.name }}"
+        echo "Release link: ${{ steps.create-release.outputs.link }}"
+
+    - id: 'run-e2e-tests'
+      name: 'Run Tests'
+      run: 'npm run e2e-tests'
+      env:
+        ANNOTATIONS: '{"git-sha":"${{ github.sha }}", "annotation1":"value1"}'
+        DELIVERY_PIPELINE: 'gha-test-pipeline'
+        DESCRIPTION: 'GHA test ${{ env.TEST_UID }}'
+        IMAGES: 'gha-test-app=gcr.io/cloudrun/hello:latest'
+        LABELS: '{"managed-by":"github-actions", "label1":"value1"}'
+        NAME: 'projects/${{ secrets.PROJECT_ID }}/locations/${{ env.REGION }}/deliveryPipelines/gha-test-pipeline/releases/${{ env.TEST_UID }}'
+        PROJECT_ID: '${{ secrets.PROJECT_ID }}'
+        REGION: '${{ env.REGION }}'

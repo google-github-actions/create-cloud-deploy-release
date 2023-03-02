@@ -1,0 +1,119 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Create Cloud Deploy Release
+author: Google LLC
+description: |-
+  Use this action to create a release in Cloud Deploy.
+
+inputs:
+  name:
+    description: |-
+      The name of the release.
+    required: true
+
+  delivery_pipeline:
+    description: |-
+      The delivery pipeline to use for the release.
+    required: true
+
+  region:
+    description: |-
+      Region in which the delivery pipeline can be found.
+    required: false
+
+  source:
+    description: |-
+      The location of the files to be included in the release.
+    required: false
+
+  build_artifacts:
+    description: |-
+      Path to a Skaffold output file containing the details of the image(s) to be released.
+    required: false
+
+  images:
+    description: |-
+      The images to be released.
+    required: false
+
+  disable_initial_rollout:
+    description: |-
+      Prevent the release being deployed to the first target in the delivery pipeline.
+    default: false
+    required: false
+
+  gcs_source_staging_dir:
+    description: |-
+      A directory in Google Cloud Storage to copy the source used for staging the build.
+    required: false
+
+  skaffold_file:
+    description: |-
+      Path of the skaffold file absolute or relative to the source directory.
+    required: false
+
+  annotations:
+    description: |-
+      Add additional annotations to the release.
+    required: false
+
+  labels:
+    description: |-
+      Add additional labels to the release.
+    required: false
+
+  description:
+    description: |-
+      Include a description of the release.
+    required: false
+
+  flags:
+    description: |-
+      Space separated list of other Cloud Deploy flags, examples can be found:
+      https://cloud.google.com/sdk/gcloud/reference/deploy/releases/create#FLAGS
+      Example: --from-k8s-manifest=manifest.yaml
+    required: false
+
+  gcloud_version:
+    description: |-
+      Version of the Cloud SDK to install. If unspecified or set to "latest",
+      the latest available gcloud SDK version for the target platform will be
+      installed. Example: "290.0.1".
+    required: false
+
+  gcloud_component:
+    description: |-
+      Version of the Cloud SDK components to install and use. If unspecified, the latest
+      or released version will be used. This is the equivalent of running
+      'gcloud alpha run' or 'gcloud beta run'. Valid values are `alpha` or `beta`.
+    required: false
+
+outputs:
+  name:
+    description:
+      The full name of the release in Cloud Deploy, including project and
+      pipeline names, as well as the chosen name of the release itself.
+
+  link:
+    description:
+      A link to the Cloud Deploy release in the Google Cloud Web Console.
+
+branding:
+  icon: 'chevrons-right'
+  color: 'blue'
+
+runs:
+  using: 'node16'
+  main: 'dist/main/index.js'
