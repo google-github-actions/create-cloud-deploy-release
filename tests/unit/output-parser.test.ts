@@ -277,22 +277,22 @@ describe('#output-parser', () => {
         },
       },
       {
-        name: 'handles empty stdout',
+        name: 'fails on empty stdout',
         stdout: '',
-        expected: {},
+        error: 'no output from create release command',
       },
       {
-        name: 'handles empty array from stdout',
+        name: 'fails on empty array from stdout',
         stdout: '[]',
-        expected: {},
+        error: 'no output from create release command',
       },
       {
-        name: 'handles empty object from stdout',
+        name: 'fails on empty object from stdout',
         stdout: '{}',
-        expected: {},
+        error: 'no output from create release command',
       },
       {
-        name: 'handles invalid text from stdout',
+        name: 'fails on invalid text from stdout',
         stdout: 'Some text to fail',
         error:
           'failed to parse create release response: unexpected token S in JSON at position 0, stdout: Some text to fail',

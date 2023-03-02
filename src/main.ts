@@ -199,13 +199,8 @@ export async function run(): Promise<void> {
     }
 
     const outputs: CreateCloudDeployReleaseOutputs = parseCreateReleaseResponse(output.stdout);
-
-    if (outputs.name) {
-      setOutput('name', outputs.name);
-    }
-    if (outputs.link) {
-      setOutput('link', outputs.link);
-    }
+    setOutput('name', outputs.name);
+    setOutput('link', outputs.link);
   } catch (err) {
     const msg = errorMessage(err);
     setFailed(`create-cloud-deploy-release failed with: ${msg}`);

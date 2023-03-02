@@ -31,7 +31,7 @@ export function parseCreateReleaseResponse(
   try {
     stdout = presence(stdout);
     if (!stdout || stdout === '{}' || stdout === '[]') {
-      return {};
+      throw new Error(`no output from create release command`);
     }
 
     const outputJSON: clouddeploy_v1.Schema$Release = JSON.parse(stdout);

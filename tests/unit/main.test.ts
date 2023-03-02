@@ -25,6 +25,7 @@ import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import { TestToolCache } from '@google-github-actions/setup-cloud-sdk';
 import { errorMessage, joinKVString } from '@google-github-actions/actions-utils';
 
+import * as outputParser from '../../src/output-parser';
 import { run } from '../../src/main';
 
 // These are mock data for github actions inputs, where camel case is expected.
@@ -65,6 +66,9 @@ describe('#run', function () {
       getExecOutput: sinon
         .stub(exec, 'getExecOutput')
         .resolves({ exitCode: 0, stderr: '', stdout: '{}' }),
+      parseCreateReleaseResponse: sinon
+        .stub(outputParser, 'parseCreateReleaseResponse')
+        .resolves({ exitCode: 0, stderr: '', name: 'a', link: 'b' }),
     };
 
     sinon.stub(core, 'setFailed').throwsArg(0); // make setFailed throw exceptions
@@ -74,6 +78,7 @@ describe('#run', function () {
     sinon.stub(core, 'info').callsFake(sinon.fake());
     sinon.stub(core, 'startGroup').callsFake(sinon.fake());
     sinon.stub(core, 'warning').callsFake(sinon.fake());
+    sinon.stub(core, 'setOutput').callsFake(sinon.fake());
   });
 
   afterEach(async function () {
