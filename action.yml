@@ -15,7 +15,7 @@
 name: Create Cloud Deploy Release
 author: Google LLC
 description: |-
-  Use this action to create a release in Cloud Deploy
+  Use this action to create a release in Cloud Deploy.
 
 inputs:
   name:
@@ -45,7 +45,7 @@ inputs:
 
   images:
     description: |-
-      The images to be released
+      The images to be released.
     required: false
 
   disable_initial_rollout:
@@ -66,17 +66,17 @@ inputs:
 
   annotations:
     description: |-
-      Add additional annotations to the release
+      Add additional annotations to the release.
     required: false
 
   labels:
     description: |-
-      Add additional labels to the release
+      Add additional labels to the release.
     required: false
 
   description:
     description: |-
-      Include a description of the release
+      Include a description of the release.
     required: false
 
   flags:
