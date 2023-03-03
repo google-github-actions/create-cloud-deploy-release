@@ -59,9 +59,9 @@ jobs:
 -   `source`: (Required) The location of the files to be included in the
     release; typically application configuration manifests.
 
--   `build_artifacts`: (Required, unless providing `images`) Path to a Skaffold
-    output file containing the details of the application image(s) to be
-    released.
+-   `build_artifacts`: (Required, unless providing `images`) Path to a
+    [Skaffold output file][skaffold-output] containing the details of the
+    application image(s) to be released.
 
 -   `images`: (Required, unless providing `build_artifacts`) The details of the
     application image(s) to be released, in the format
@@ -286,4 +286,5 @@ explicitly updating your version number. Note that we only publish `MAJOR` and
 [examples]: https://github.com/google-github-actions/example-workflows/tree/main/workflows/create-cloud-deploy-release
 [gke]: https://cloud.google.com/kubernetes-engine
 [sa]: https://cloud.google.com/iam/docs/creating-managing-service-accounts
+[skaffold-output]: https://skaffold.dev/docs/workflows/ci-cd/#traditional-continuous-delivery
 [wif]: https://cloud.google.com/iam/docs/workload-identity-federation
