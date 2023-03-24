@@ -2,7 +2,7 @@
 
 The `create-cloud-deploy-release` GitHub Action creates a [Cloud Deploy][cd]
 [release][cd-release] to manage the deployment of an application to one or more
-[Google Kubernetes Engine (GKE)][gke] or [Cloud Run][cloud-run]
+[Google Kubernetes Engine (GKE)][gke], [Anthos][anthos], or [Cloud Run][cloud-run]
 [targets][cd-target].
 
 ## Prerequisites
@@ -275,6 +275,7 @@ explicitly updating your version number. Note that we only publish `MAJOR` and
 `MAJOR.MINOR.PATCH` versions. There is **not** a floating alias for
 `MAJOR.MINOR`.
 
+[anthos]: https://cloud.google.com/anthos
 [cd]: https://cloud.google.com/deploy
 [cd-custom-sa]: https://cloud.google.com/deploy/docs/cloud-deploy-service-account#what_service_accounts_to_create
 [cd-iam]: https://cloud.google.com/deploy/docs/cloud-deploy-service-account#execution_service_account
