@@ -49,20 +49,20 @@ jobs:
       name: 'Auth'
       uses: 'google-github-actions/auth@v1'
       with:
-        workload_identity_provider: '${{ secrets.WIF_PROVIDER_NAME }}'
-        service_account: '${{ secrets.SERVICE_ACCOUNT_EMAIL }}'
+        workload_identity_provider: '${{ vars.WIF_PROVIDER_NAME }}'
+        service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
 
     - id: 'gcloud-setup'
       name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@main'
       with:
-        project_id: '${{ secrets.PROJECT_ID }}'
+        project_id: '${{ vars.PROJECT_ID }}'
 
     - id: 'populate-pipeline-template'
       name: 'Populate values in template for Cloud Deploy pipeline and target'
       run: 'envsubst < tests/fixtures/clouddeploy.yaml.template > tests/fixtures/clouddeploy.yaml'
       env:
-        PROJECT_ID: '${{ secrets.PROJECT_ID }}'
+        PROJECT_ID: '${{ vars.PROJECT_ID }}'
         REGION: '${{ env.REGION }}'
 
     - id: 'create-pipeline'
@@ -100,6 +100,6 @@ jobs:
         DESCRIPTION: 'GHA test ${{ env.TEST_UID }}'
         IMAGES: 'gha-test-app=gcr.io/cloudrun/hello:latest'
         LABELS: '{"managed-by":"github-actions", "label1":"value1"}'
-        NAME: 'projects/${{ secrets.PROJECT_ID }}/locations/${{ env.REGION }}/deliveryPipelines/gha-test-pipeline/releases/${{ env.TEST_UID }}'
-        PROJECT_ID: '${{ secrets.PROJECT_ID }}'
+        NAME: 'projects/${{ vars.PROJECT_ID }}/locations/${{ env.REGION }}/deliveryPipelines/gha-test-pipeline/releases/${{ env.TEST_UID }}'
+        PROJECT_ID: '${{ vars.PROJECT_ID }}'
         REGION: '${{ env.REGION }}'
