@@ -275,6 +275,10 @@ explicitly updating your version number. Note that we only publish `MAJOR` and
 `MAJOR.MINOR.PATCH` versions. There is **not** a floating alias for
 `MAJOR.MINOR`.
 
+## Support
+
+This is not an officially supported Google product.
+
 [anthos]: https://cloud.google.com/anthos
 [cd]: https://cloud.google.com/deploy
 [cd-custom-sa]: https://cloud.google.com/deploy/docs/cloud-deploy-service-account#what_service_accounts_to_create
