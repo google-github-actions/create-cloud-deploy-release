@@ -156,50 +156,6 @@ jobs:
 There are a few ways to authenticate this action. The caller must have
 permissions to access the secrets being requested.
 
-You will need to authenticate to Google Cloud as a service account with the
-following roles:
-
--   Cloud Deploy Releaser (`roles/clouddeploy.releaser`)
-    -   Can create and retrieve releases and rollouts
-
-This service account needs to be a member of the service account used by Cloud
-Deploy, with role `Service Account User`. To grant a user permissions for a
-service account, use one of the methods found in [Configuring Ownership and
-access to a service account](https://cloud.google.com/iam/docs/granting-roles-to-service-accounts#granting_access_to_a_user_for_a_service_account)
-
-By default, Cloud Deploy itself will use the `Compute Engine default service
-account`, `(PROJECT_NUMBER-compute@developer.gserviceaccount.com)` as described
-in the documentation for [IAM within Cloud Deploy][cd-iam]. This service
-account must have the `roles/clouddeploy.jobRunner` role in the Cloud Deploy
-project. Alternatively you may choose to configure Cloud Deploy to use a custom
-service account [as detailed in the Cloud Deploy documentation][cd-custom-sa].
-
-The service account used by Cloud Deploy additionally needs permisisons that
-allow deployment of a service to your target runtime, [GKE][gke] or
-[Cloud Run][cloud-run], as described in the following sections.
-
-### Cloud Run Authorization
-
-To deploy to Cloud Run, the service account used by Cloud Deploy needs the following permissions:
-
--   Cloud Run Developer (`roles/run.developer`)
-    -   Read and write access to all Cloud Run resources.
-
-The service account additionally needs to be a member of the service account
-used by Cloud Run, with role `Service Account User`. This may be the `Compute
-Engine default service account,
-(PROJECT_NUMBER-compute@developer.gserviceaccount.com)` or a custom service
-account, depending on your configuration. To grant a user permissions for a
-service account, use one of the methods found in [Configuring Ownership and
-access to a service account](https://cloud.google.com/iam/docs/granting-roles-to-service-accounts#granting_access_to_a_user_for_a_service_account)
-
-### GKE Authorization
-
-To deploy to GKE, the service account used by Cloud Deploy needs the following permissions:
-
--   Kubernetes Engine Developer (`roles/container.developer`)
-    -   Provides access to Kubernetes API objects inside clusters.
-
 ### Via google-github-actions/auth
 
 Use [google-github-actions/auth](https://github.com/google-github-actions/auth)
@@ -250,6 +206,78 @@ jobs:
 The action will automatically detect and use the Application Default
 Credentials.
 
+### Cloud Deploy Release Creation
+
+To use the default Cloud Deploy configuration you will need to authenticate to
+Google Cloud as a service account with the following roles:
+
+-   Cloud Deploy Releaser (`roles/clouddeploy.releaser`)
+    -   To create and retrieve releases and rollouts
+-   Cloud Storage Admin (`roles/storage.admin`)
+    -   To write release packages
+
+This is in addition to any other roles that may be needed earlier in the
+pipeline, for example `roles/artifactregistry.writer` to allow images to be
+pushed to Artifact Registry.
+
+By default, Cloud Deploy itself will use the `Compute Engine default service
+account`, `PROJECT_NUMBER-compute@developer.gserviceaccount.com` as described
+in the documentation for [IAM within Cloud Deploy][cd-iam], though for
+production use-cases it's recommended that you create one or more dedicated service
+accounts [as detailed in the Cloud Deploy documentation][cd-custom-sa]. A custom
+service account can be granted the `roles/clouddeploy.jobRunner` role in the Cloud
+Deploy project to enable required permissions.
+
+You may find that Organizational Policy rules prevent certain permissions being
+assigned to default service accounts. In this case please consult with your
+organization administrators.
+
+By default the service account used by Cloud Deploy requires the following roles:
+
+-   Cloud Logging Writer (`roles/logging.logWriter`)
+    -   To write logs
+-   Cloud Storage Viewer (`storage/object.viewer`)
+    -   To read Cloud Deploy artifacts
+-   Cloud Storage Creator (`storage/object.creator`)
+    -   To write Cloud Deploy artifacts
+
+Depending on your Cloud Deploy configuration you may choose to create more
+granular roles for custom resources, rather than relying on the default.
+
+The service account used by Cloud Deploy additionally needs permisisons that
+allow deployment of a service to your target runtime, [GKE][gke] or
+[Cloud Run][cloud-run], as described in the following sections. This could be:
+
+-   The default compute service account
+-   The same custom service account you created for release creation, or
+-   A separate custom service account dedicated to deployment.
+
+### Cloud Run Authorization
+
+To deploy to Cloud Run, the service account used by Cloud Deploy needs the
+following permissions:
+
+-   Cloud Run Developer (`roles/run.developer`)
+    -   Read and write access to all Cloud Run resources.
+
+The service account additionally needs to be a member of the service account
+used by Cloud Run, with role `Service Account User`. This may be the `Compute
+Engine default service account, (PROJECT_NUMBER-compute@developer.gserviceaccount.com)`
+or a custom service account, depending on your configuration. To grant
+`iam.serviceAccounts.actAs` permissions for a service account, use one of the methods
+found in [the IAM documentation][sa-ownership-and-access].
+
+### GKE Authorization
+
+To deploy to GKE, the service account used by Cloud Deploy needs the following permissions:
+
+-   Kubernetes Engine Developer (`roles/container.developer`)
+    -   Provides access to Kubernetes API objects inside clusters.
+
+In all cases, you should follow the principle of least privilege when assigning
+IAM roles. When possible, grant roles at the resource level as opposed to the
+project level.
+
 ## Example Workflows
 
 -   [Example workflows][examples] for `create-cloud-deploy-release`
@@ -291,5 +319,6 @@ This is not an officially supported Google product.
 [examples]: https://github.com/google-github-actions/example-workflows/tree/main/workflows/create-cloud-deploy-release
 [gke]: https://cloud.google.com/kubernetes-engine
 [sa]: https://cloud.google.com/iam/docs/creating-managing-service-accounts
+[sa-ownership-and-access]: https://cloud.google.com/iam/docs/manage-access-service-accounts#grant-single-role
 [skaffold-output]: https://skaffold.dev/docs/workflows/ci-cd/#traditional-continuous-delivery
 [wif]: https://cloud.google.com/iam/docs/workload-identity-federation
