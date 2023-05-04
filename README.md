@@ -5,6 +5,12 @@ The `create-cloud-deploy-release` GitHub Action creates a [Cloud Deploy][cd]
 [Google Kubernetes Engine (GKE)][gke], [Anthos][anthos], or [Cloud Run][cloud-run]
 [targets][cd-target].
 
+**This is not an officially supported Google product, and it is not covered by a
+Google Cloud support contract. To report bugs or request features in a Google
+Cloud product, please contact [Google Cloud
+support](https://cloud.google.com/support).**
+
+
 ## Prerequisites
 
 -   This action requires Google Cloud credentials that are authorized to access
@@ -303,9 +309,6 @@ explicitly updating your version number. Note that we only publish `MAJOR` and
 `MAJOR.MINOR.PATCH` versions. There is **not** a floating alias for
 `MAJOR.MINOR`.
 
-## Support
-
-This is not an officially supported Google product.
 
 [anthos]: https://cloud.google.com/anthos
 [cd]: https://cloud.google.com/deploy
