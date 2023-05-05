@@ -1,6 +1,6 @@
 {
   "name": "create-cloud-deploy-release",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Github Action: Create Cloud Deploy Release",
   "main": "dist/index.js",
   "scripts": {
