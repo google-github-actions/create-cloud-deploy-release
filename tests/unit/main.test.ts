@@ -267,12 +267,12 @@ describe('#run', function () {
   });
 
   it('sets flags if given', async function () {
-    this.stubs.getInput.withArgs('flags').returns('flag1=value1,flag2=value2');
+    this.stubs.getInput.withArgs('flags').returns('--flag1=value1 --flag2=value2');
     await run();
     const call = this.stubs.getExecOutput.getCall(0);
     expect(call).to.be;
     const args = call.args[1];
-    expect(args).to.include.members(['--flags', 'flag1=value1,flag2=value2']);
+    expect(args).to.include.members(['--flag1', 'value1', '--flag2', 'value2']);
   });
 
   it('uses default components without gcloud_component flag', async function () {

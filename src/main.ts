@@ -153,7 +153,6 @@ export async function run(): Promise<void> {
     if (flags) {
       const flagList = parseFlags(flags);
       if (flagList) {
-        cmd.push('--flags');
         cmd = cmd.concat(flagList);
       }
     }

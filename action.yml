@@ -83,7 +83,7 @@ inputs:
     description: |-
       Space separated list of other Cloud Deploy flags, examples can be found:
       https://cloud.google.com/sdk/gcloud/reference/deploy/releases/create#FLAGS
-      Example: --from-k8s-manifest=manifest.yaml
+      Example: '--from-k8s-manifest=manifest.yaml --skaffold-version=skaffold_preview'
     required: false
 
   gcloud_version:
