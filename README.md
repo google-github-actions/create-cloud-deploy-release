@@ -47,7 +47,7 @@ jobs:
    - id: create-release
      uses: 'google-github-actions/create-cloud-deploy-release@v1'
       with:
-        name: 'demo-app-v1.2.3'
+        name: 'demo-app-v1-2-3'
         description: 'Add new functionality to demo-app'
         delivery_pipeline: 'demo-app-pipeline'
         region: 'us-central1'
