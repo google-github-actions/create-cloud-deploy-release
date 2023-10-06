@@ -39,6 +39,7 @@ const fakeInputs: { [key: string]: string } = {
   sourceStagingDir: '',
   skaffoldFile: '',
   description: '',
+  deploy_parameters: '',
   flags: '',
   annotations: '',
   labels: '',
@@ -264,6 +265,20 @@ describe('#run', function () {
     expect(call).to.be;
     const args = call.args[1];
     expect(args).to.include.members(['--description', 'My description']);
+  });
+
+  it('sets deploy parameters if given', async function () {
+    this.stubs.getInput.withArgs('deploy_parameters').returns('param-key=param-value');
+
+    const expectedParameters = {
+      'param-key': 'param-value',
+    };
+
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--deploy-parameters', joinKVString(expectedParameters)]);
   });
 
   it('sets flags if given', async function () {
