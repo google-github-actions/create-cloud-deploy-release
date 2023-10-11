@@ -79,6 +79,11 @@ inputs:
       Include a description of the release.
     required: false
 
+  deploy_parameters:
+    description: |-
+      Additional parameters to supply at release creation time.
+    required: false
+
   flags:
     description: |-
       Space separated list of other Cloud Deploy flags, examples can be found:

@@ -87,6 +87,7 @@ export async function run(): Promise<void> {
     const annotations = parseKVString(getInput('annotations'));
     const labels = parseKVString(getInput('labels'));
     const description = getInput('description');
+    const deployParameters = parseKVString(getInput('deploy_parameters'));
     const flags = getInput('flags');
     const gcloudComponent = presence(getInput('gcloud_component'));
     const gcloudVersion = getInput('gcloud_version');
@@ -139,6 +140,9 @@ export async function run(): Promise<void> {
     }
     if (skaffoldFile) {
       cmd.push('--skaffold-file', skaffoldFile);
+    }
+    if (deployParameters) {
+      cmd.push('--deploy-parameters', joinKVString(deployParameters));
     }
 
     const allAnnotations = Object.assign({}, getDefaultAnnotations(), annotations);

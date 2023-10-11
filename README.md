@@ -132,6 +132,19 @@ jobs:
 
 -   `description`: (Optional) Include a description of the release.
 
+-   `deploy_parameters`: (Optional) Additional parameters to supply at release creation time.
+
+    ```yaml
+    with:
+      deploy_parameters: |-
+        parameter1=value1
+        parameter2=value2
+    ```
+
+    See the [Deploy Parameters](https://cloud.google.com/deploy/docs/parameters)
+    section in the Cloud Deploy documentation for details of how to use the corresponding
+    placeholders in your manifest(s).
+
 -   `flags`: (Optional) Space separated list of other Cloud Deploy flags,
     examples can be found [here][cd-flags]. This can be used to access features
     that are not exposed via this GitHub Action.
