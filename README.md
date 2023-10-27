@@ -37,7 +37,7 @@ jobs:
       id-token: 'write'
 
     steps:
-    - uses: 'actions/checkout@v3'
+    - uses: 'actions/checkout@v4'
 
     - uses: 'google-github-actions/auth@v1'
       with:
