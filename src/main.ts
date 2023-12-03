@@ -99,10 +99,10 @@ export async function run(): Promise<void> {
     if (!deliveryPipeline) {
       throw new Error('No delivery pipeline set.');
     }
-    if (!buildArtifacts && !images) {
+    if (!buildArtifacts && !Object.keys(images)?.length) {
       throw new Error('One of `build_artifacts` and `images` inputs must be supplied.');
     }
-    if (buildArtifacts && images && Object.keys(images).length > 0) {
+    if (buildArtifacts && Object.keys(images)?.length) {
       throw new Error('Both `build_artifacts` and `images` inputs set - please select only one.');
     }
 

@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-import 'mocha';
-import { expect } from 'chai';
-import * as sinon from 'sinon';
+import { afterEach, beforeEach, describe, mock, it } from 'node:test';
+import assert from 'node:assert';
 
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 
 import { TestToolCache } from '@google-github-actions/setup-cloud-sdk';
-import { errorMessage, joinKVString } from '@google-github-actions/actions-utils';
 
 import * as outputParser from '../../src/output-parser';
 import { run } from '../../src/main';
 
 // These are mock data for github actions inputs, where camel case is expected.
-const fakeInputs: { [key: string]: string } = {
+const fakeInputs = {
   delivery_pipeline: 'delivery-pipeline',
   name: 'release-001',
   region: 'us-central1',
@@ -45,280 +43,376 @@ const fakeInputs: { [key: string]: string } = {
   labels: '',
 };
 
-function getInputMock(name: string): string {
-  return fakeInputs[name];
-}
+const defaultMocks = (
+  m: typeof mock,
+  overrideInputs?: Record<string, string>,
+): Record<string, any> => {
+  const inputs = Object.assign({}, fakeInputs, overrideInputs);
+  return {
+    startGroup: m.method(core, 'startGroup', () => {}),
+    endGroup: m.method(core, 'endGroup', () => {}),
+    group: m.method(core, 'group', () => {}),
+    logDebug: m.method(core, 'debug', () => {}),
+    logError: m.method(core, 'error', () => {}),
+    logInfo: m.method(core, 'info', () => {}),
+    logNotice: m.method(core, 'notice', () => {}),
+    logWarning: m.method(core, 'warning', () => {}),
+    exportVariable: m.method(core, 'exportVariable', () => {}),
+    setSecret: m.method(core, 'setSecret', () => {}),
+    addPath: m.method(core, 'addPath', () => {}),
+    setOutput: m.method(core, 'setOutput', () => {}),
+    setFailed: m.method(core, 'setFailed', (msg: string) => {
+      throw new Error(msg);
+    }),
+    getBooleanInput: m.method(core, 'getBooleanInput', (name: string) => {
+      return !!inputs[name];
+    }),
+    getMultilineInput: m.method(core, 'getMultilineInput', (name: string) => {
+      return inputs[name];
+    }),
+    getInput: m.method(core, 'getInput', (name: string) => {
+      return inputs[name];
+    }),
 
-describe('#run', function () {
-  beforeEach(async function () {
+    authenticateGcloudSDK: m.method(setupGcloud, 'authenticateGcloudSDK', () => {}),
+    isInstalled: m.method(setupGcloud, 'isInstalled', () => {
+      return true;
+    }),
+    installGcloudSDK: m.method(setupGcloud, 'installGcloudSDK', async () => {
+      return '1.2.3';
+    }),
+    installComponent: m.method(setupGcloud, 'installComponent', () => {}),
+    getLatestGcloudSDKVersion: m.method(setupGcloud, 'getLatestGcloudSDKVersion', () => {
+      return '1.2.3';
+    }),
+
+    getExecOutput: m.method(exec, 'getExecOutput', async () => {
+      return {
+        exitCode: 0,
+        stderr: '',
+        stdout: '{}',
+      };
+    }),
+
+    parseCreateResponse: m.method(outputParser, 'parseCreateReleaseResponse', async () => {
+      return {
+        exitCode: 0,
+        stderr: '',
+        name: 'a',
+        link: 'b',
+      };
+    }),
+  };
+};
+
+describe('#run', async () => {
+  beforeEach(async () => {
     await TestToolCache.start();
-
-    this.stubs = {
-      getInput: sinon.stub(core, 'getInput').callsFake(getInputMock),
-      getBooleanInput: sinon.stub(core, 'getBooleanInput').returns(false),
-      exportVariable: sinon.stub(core, 'exportVariable'),
-      authenticateGcloudSDK: sinon.stub(setupGcloud, 'authenticateGcloudSDK'),
-      getLatestGcloudSDKVersion: sinon
-        .stub(setupGcloud, 'getLatestGcloudSDKVersion')
-        .resolves('1.2.3'),
-      isInstalled: sinon.stub(setupGcloud, 'isInstalled').returns(true),
-      installGcloudSDK: sinon.stub(setupGcloud, 'installGcloudSDK'),
-      installComponent: sinon.stub(setupGcloud, 'installComponent'),
-      getExecOutput: sinon
-        .stub(exec, 'getExecOutput')
-        .resolves({ exitCode: 0, stderr: '', stdout: '{}' }),
-      parseCreateReleaseResponse: sinon
-        .stub(outputParser, 'parseCreateReleaseResponse')
-        .resolves({ exitCode: 0, stderr: '', name: 'a', link: 'b' }),
-    };
-
-    sinon.stub(core, 'setFailed').throwsArg(0); // make setFailed throw exceptions
-    sinon.stub(core, 'addPath').callsFake(sinon.fake());
-    sinon.stub(core, 'debug').callsFake(sinon.fake());
-    sinon.stub(core, 'endGroup').callsFake(sinon.fake());
-    sinon.stub(core, 'info').callsFake(sinon.fake());
-    sinon.stub(core, 'startGroup').callsFake(sinon.fake());
-    sinon.stub(core, 'warning').callsFake(sinon.fake());
-    sinon.stub(core, 'setOutput').callsFake(sinon.fake());
   });
 
-  afterEach(async function () {
-    Object.keys(this.stubs).forEach((k) => this.stubs[k].restore());
-    sinon.restore();
+  afterEach(async () => {
     delete process.env.GITHUB_REPOSITORY;
     delete process.env.GITHUB_SHA;
     delete process.env.GITHUB_SERVER_URL;
     await TestToolCache.stop();
   });
 
-  it('installs the gcloud SDK if it is not already installed', async function () {
-    this.stubs.isInstalled.returns(false);
+  it('installs the gcloud SDK if it is not already installed', async (t) => {
+    const mocks = defaultMocks(t.mock);
+    t.mock.method(setupGcloud, 'isInstalled', () => {
+      return false;
+    });
+
     await run();
-    expect(this.stubs.installGcloudSDK.callCount).to.eq(1);
+
+    assert.deepStrictEqual(mocks.installGcloudSDK.mock.callCount(), 1);
   });
 
-  it('uses the cached gcloud SDK if it was already installed', async function () {
-    this.stubs.isInstalled.returns(true);
+  it('uses the cached gcloud SDK if it was already installed', async (t) => {
+    const mocks = defaultMocks(t.mock);
+    t.mock.method(setupGcloud, 'isInstalled', () => {
+      return true;
+    });
+
     await run();
-    expect(this.stubs.installGcloudSDK.callCount).to.eq(0);
+
+    assert.deepStrictEqual(mocks.installGcloudSDK.mock.callCount(), 0);
   });
 
-  it('fails if release name is not provided', async function () {
-    this.stubs.getInput.withArgs('name').returns('');
-    expectError(run, 'No release name set.');
+  it('fails if release name is not provided', async (t) => {
+    defaultMocks(t.mock, {
+      name: '',
+    });
+    assert.rejects(run, 'No release name set.');
   });
 
-  it('fails if delivery_pipeline is not provided', async function () {
-    this.stubs.getInput.withArgs('delivery_pipeline').returns('');
-    expectError(run, 'No delivery pipeline set.');
+  it('fails if delivery_pipeline is not provided', async (t) => {
+    defaultMocks(t.mock, {
+      delivery_pipeline: '',
+    });
+    assert.rejects(run, 'No delivery pipeline set.');
   });
 
-  it('fails if neither build-artifacts nor images are provided', async function () {
-    this.stubs.getInput.withArgs('build_artifacts').returns('');
-    this.stubs.getInput.withArgs('images').returns('');
-    expectError(run, 'One of `build_artifacts` and `images` inputs must be supplied.');
+  it('fails if neither build-artifacts nor images are provided', async (t) => {
+    defaultMocks(t.mock, {
+      build_artifacts: '',
+      images: '',
+    });
+    assert.rejects(run, 'One of `build_artifacts` and `images` inputs must be supplied.');
   });
 
-  it('fails if build-artifacts and images are both provided', async function () {
-    this.stubs.getInput.withArgs('build_artifacts').returns('artifacts.json');
-    this.stubs.getInput.withArgs('images').returns('image1=image1:tag1');
-    expectError(run, 'Both `build_artifacts` and `images` inputs set - please select only one.');
+  it('fails if build-artifacts and images are both provided', async (t) => {
+    defaultMocks(t.mock, {
+      build_artifacts: 'artifacts.json',
+      images: 'image1=image1:tag1',
+    });
+    assert.rejects(run, 'Both `build_artifacts` and `images` inputs set - please select only one.');
   });
 
-  it('sets region if given', async function () {
-    this.stubs.getInput.withArgs('region').returns('europe-west1');
+  it('sets region if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      region: 'europe-west1',
+    });
+
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--region', 'europe-west1']);
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+      '--region',
+      'europe-west1',
+    ]);
   });
 
-  it('sets build-artifacts if given', async function () {
-    this.stubs.getInput.withArgs('build_artifacts').returns('artifacts.json');
-    this.stubs.getInput.withArgs('images').returns('');
+  it('sets build-artifacts if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      build_artifacts: 'artifacts.json',
+      images: '',
+    });
+
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--build-artifacts', 'artifacts.json']);
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+      '--build-artifacts',
+      'artifacts.json',
+    ]);
   });
 
-  it('sets images if given', async function () {
-    this.stubs.getInput.withArgs('images').returns('image1=image1:tag1,image2=image2:tag2');
-    this.stubs.getInput.withArgs('build_artifacts').returns('');
+  it('sets images if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      build_artifacts: '',
+      images: 'image1=image1:tag1,image2=image2:tag2',
+    });
+
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--images', 'image1=image1:tag1,image2=image2:tag2']);
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+      '--images',
+      'image1=image1:tag1,image2=image2:tag2',
+    ]);
   });
 
-  it('sets source if given', async function () {
-    this.stubs.getInput.withArgs('source').returns('src');
+  it('sets source if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      source: './src',
+    });
+
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--source', 'src']);
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), ['--source', './src']);
   });
 
-  it('sets disable-initial-rollout if given', async function () {
-    this.stubs.getBooleanInput.withArgs('disable_initial_rollout').returns(true);
+  it('sets disable-initial-rollout if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      disable_initial_rollout: 'true',
+    });
+
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--disable-initial-rollout']);
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+      '--disable-initial-rollout',
+    ]);
   });
 
-  it('sets gcs-source-staging-dir if given', async function () {
-    this.stubs.getInput.withArgs('gcs_source_staging_dir').returns('source/path');
+  it('sets gcs-source-staging-dir if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      gcs_source_staging_dir: 'source/path',
+    });
+
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--gcs-source-staging-dir', 'source/path']);
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+      '--gcs-source-staging-dir',
+      'source/path',
+    ]);
   });
 
-  it('sets skaffold-file if given', async function () {
-    this.stubs.getInput.withArgs('skaffold_file').returns('path/to/skaffold.yaml');
+  it('sets skaffold-file if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      skaffold_file: 'path/to/skaffold.yaml',
+    });
+
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--skaffold-file', 'path/to/skaffold.yaml']);
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+      '--skaffold-file',
+      'path/to/skaffold.yaml',
+    ]);
   });
 
-  it('sets default annotations', async function () {
-    this.stubs.getInput.withArgs('annotations').returns('');
+  it('sets default annotations', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      annotations: '',
+    });
 
     process.env.GITHUB_REPOSITORY = 'test-org/test-repo';
     process.env.GITHUB_SERVER_URL = 'https://github.com';
     process.env.GITHUB_SHA = 'abcdef123456';
 
-    const expectedAnnotations = {
-      'commit': 'https://github.com/test-org/test-repo/commit/abcdef123456',
-      'git-sha': 'abcdef123456',
-    };
-
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--annotations', joinKVString(expectedAnnotations)]);
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+      '--annotations',
+      'commit=https://github.com/test-org/test-repo/commit/abcdef123456,git-sha=abcdef123456',
+    ]);
   });
 
-  it('sets default and additional annotations if given', async function () {
-    this.stubs.getInput.withArgs('annotations').returns('annotation_key=annotation_value');
+  it('sets default and additional annotations if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      annotations: 'annotation_key=annotation_value',
+    });
 
     process.env.GITHUB_REPOSITORY = 'test-org/test-repo';
     process.env.GITHUB_SERVER_URL = 'https://github.com';
     process.env.GITHUB_SHA = 'abcdef123456';
 
-    const expectedAnnotations = {
-      'commit': 'https://github.com/test-org/test-repo/commit/abcdef123456',
-      'git-sha': 'abcdef123456',
-      'annotation_key': 'annotation_value',
-    };
-
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--annotations', joinKVString(expectedAnnotations)]);
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+      '--annotations',
+      'commit=https://github.com/test-org/test-repo/commit/abcdef123456,git-sha=abcdef123456,annotation_key=annotation_value',
+    ]);
   });
 
-  it('sets default labels', async function () {
-    this.stubs.getInput.withArgs('labels').returns('');
-
-    const expectedLabels = {
-      'managed-by': 'github-actions',
-    };
+  it('sets default labels', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      labels: '',
+    });
 
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--labels', joinKVString(expectedLabels)]);
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+      '--labels',
+      'managed-by=github-actions',
+    ]);
   });
 
-  it('sets default and additional labels if given', async function () {
-    this.stubs.getInput.withArgs('labels').returns('label_key=label_value');
-
-    const expectedLabels = {
-      'managed-by': 'github-actions',
-      'label_key': 'label_value',
-    };
+  it('sets default and additional labels if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      labels: 'label_key=label_value',
+    });
 
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--labels', joinKVString(expectedLabels)]);
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+      '--labels',
+      'managed-by=github-actions,label_key=label_value',
+    ]);
   });
 
-  it('sets description if given', async function () {
-    this.stubs.getInput.withArgs('description').returns('My description');
-    await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--description', 'My description']);
-  });
-
-  it('sets deploy parameters if given', async function () {
-    this.stubs.getInput.withArgs('deploy_parameters').returns('param-key=param-value');
-
-    const expectedParameters = {
-      'param-key': 'param-value',
-    };
+  it('sets description if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      description: 'My description',
+    });
 
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--deploy-parameters', joinKVString(expectedParameters)]);
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+      '--description',
+      'My description',
+    ]);
   });
 
-  it('sets flags if given', async function () {
-    this.stubs.getInput.withArgs('flags').returns('--flag1=value1 --flag2=value2');
+  it('sets deploy parameters if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      deploy_parameters: 'param-key=param-value',
+    });
+
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--flag1', 'value1', '--flag2', 'value2']);
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+      '--deploy-parameters',
+      'param-key=param-value',
+    ]);
   });
 
-  it('uses default components without gcloud_component flag', async function () {
+  it('sets flags if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      flags: '--flag1=value1 --flag2=value2',
+    });
+
     await run();
-    expect(this.stubs.installComponent.callCount).to.eq(0);
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+      '--flag1',
+      'value1',
+      '--flag2',
+      'value2',
+    ]);
   });
 
-  it('throws error with invalid gcloud component flag', async function () {
-    this.stubs.getInput.withArgs('gcloud_component').returns('wrong_value');
-    expectError(run, 'invalid input received for gcloud_component: wrong_value');
-  });
-
-  it('installs alpha component with alpha flag', async function () {
-    this.stubs.getInput.withArgs('gcloud_component').returns('alpha');
+  it('uses default components without gcloud_component flag', async (t) => {
+    const mocks = defaultMocks(t.mock);
     await run();
-    expect(this.stubs.installComponent.withArgs('alpha').callCount).to.eq(1);
+    assert.deepStrictEqual(mocks.installComponent.mock.callCount(), 0);
   });
 
-  it('installs beta component with beta flag', async function () {
-    this.stubs.getInput.withArgs('gcloud_component').returns('beta');
+  it('throws error with invalid gcloud component flag', async (t) => {
+    defaultMocks(t.mock, {
+      gcloud_component: 'wrong_value',
+    });
+    assert.rejects(run, 'invalid input received for gcloud_component: wrong_value');
+  });
+
+  it('installs alpha component with alpha flag', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      gcloud_component: 'alpha',
+    });
+
     await run();
-    expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+
+    expectSubArray(mocks.installComponent.mock.calls?.at(0)?.arguments, ['alpha']);
+  });
+
+  it('installs beta component with beta flag', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      gcloud_component: 'beta',
+    });
+
+    await run();
+
+    expectSubArray(mocks.installComponent.mock.calls?.at(0)?.arguments, ['beta']);
   });
 });
 
-async function expectError(fn: () => Promise<void>, want: string) {
-  try {
-    await fn();
-    throw new Error(`expected error`);
-  } catch (err) {
-    const msg = errorMessage(err);
-    expect(msg).to.include(want);
+const expectSubArray = (m: string[], exp: string[]) => {
+  const window = exp.length;
+  for (let i = 0; i < m.length; i++) {
+    const x = m.slice(i, i + window);
+
+    let matches = true;
+    for (let j = 0; j < exp.length; j++) {
+      if (x[j] !== exp[j]) {
+        matches = false;
+      }
+    }
+    if (matches) {
+      return true;
+    }
   }
-}
+
+  throw new assert.AssertionError({
+    message: 'mismatch',
+    actual: m,
+    expected: exp,
+    operator: 'subArray',
+  });
+};
