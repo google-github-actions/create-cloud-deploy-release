@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-import 'mocha';
-import { expect } from 'chai';
+import { before, describe, it } from 'node:test';
+import assert from 'node:assert';
 
-import { getExecOutput } from '@actions/exec';
 import { clouddeploy_v1 } from 'googleapis';
+import { getExecOutput } from '@actions/exec';
 import yaml from 'js-yaml';
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-describe('E2E tests', function () {
+describe('E2E tests', async () => {
   const { ANNOTATIONS, DELIVERY_PIPELINE, DESCRIPTION, LABELS, NAME, PROJECT_ID, REGION } =
     process.env;
 
   let release: clouddeploy_v1.Schema$Release;
   let toolCommand: string;
 
-  before(async function () {
+  before(async () => {
     toolCommand = 'gcloud';
     if (NAME && DELIVERY_PIPELINE && PROJECT_ID && REGION) {
       // get Service yaml
@@ -62,33 +62,37 @@ describe('E2E tests', function () {
     }
   });
 
-  it('has the correct annotations', function () {
+  it('has the correct annotations', async () => {
     if (ANNOTATIONS && release) {
       const expected = JSON.parse(ANNOTATIONS);
-      const actual = release?.annotations;
-      expect(actual).to.deep.include(expected);
+      const actual = release?.annotations || {};
+
+      // Filter out only the keys we care about
+      const subset = Object.assign({}, ...Object.keys(expected).map((k) => ({ [k]: actual[k] })));
+
+      assert.deepStrictEqual(subset, expected);
     }
   });
 
-  it('has the correct description', function () {
+  it('has the correct description', async () => {
     if (DESCRIPTION && release) {
       const actual = release?.description;
-      expect(actual).to.deep.eq(DESCRIPTION);
+      assert.deepStrictEqual(actual, DESCRIPTION);
     }
   });
 
-  it('has the correct name', function () {
+  it('has the correct name', async () => {
     if (NAME && release) {
       const actual = release?.name;
-      expect(actual).to.deep.eq(NAME);
+      assert.deepStrictEqual(actual, NAME);
     }
   });
 
-  it('has the correct labels', function () {
+  it('has the correct labels', async () => {
     if (LABELS && release) {
       const expected = JSON.parse(LABELS);
       const actual = release?.labels;
-      expect(actual).to.deep.eq(expected);
+      assert.deepStrictEqual(actual, expected);
     }
   });
 });

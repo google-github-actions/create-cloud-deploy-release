@@ -19,9 +19,8 @@ import { KVPair } from '@google-github-actions/actions-utils';
 // Generate default annotations as list of key-value pair
 export function getDefaultAnnotations(): KVPair {
   const annotations: KVPair = {};
-  annotations[
-    'commit'
-  ] = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/commit/${process.env.GITHUB_SHA}`;
+  annotations['commit'] =
+    `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/commit/${process.env.GITHUB_SHA}`;
   annotations['git-sha'] = `${process.env.GITHUB_SHA}`;
 
   return annotations;

@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import 'mocha';
-import { expect } from 'chai';
-import { parseCreateReleaseResponse } from '../../src/output-parser';
-import { CreateCloudDeployReleaseOutputs } from '../../src/main';
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
 
-describe('#output-parser', () => {
-  describe('#parseCreateReleaseResponse', () => {
+import { CreateCloudDeployReleaseOutputs } from '../../src/main';
+import { parseCreateReleaseResponse } from '../../src/output-parser';
+
+describe('#output-parser', async () => {
+  describe('#parseCreateReleaseResponse', async () => {
     const cases: {
       name: string;
       stdout: string | undefined;
@@ -299,13 +300,14 @@ describe('#output-parser', () => {
     ];
 
     cases.forEach((tc) => {
-      it(tc.name, () => {
+      it(tc.name, async () => {
         if (tc.error) {
-          expect(() => {
+          assert.throws(() => {
             parseCreateReleaseResponse(tc.stdout);
-          }).to.throw(tc.error);
+          }, new RegExp(tc.error));
         } else {
-          expect(parseCreateReleaseResponse(tc.stdout)).to.eql(tc.expected);
+          const result = parseCreateReleaseResponse(tc.stdout);
+          assert.deepStrictEqual(result, tc.expected);
         }
       });
     });
