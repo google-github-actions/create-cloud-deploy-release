@@ -39,7 +39,7 @@ jobs:
     steps:
     - uses: 'actions/checkout@v4'
 
-    - uses: 'google-github-actions/auth@v1'
+    - uses: 'google-github-actions/auth@v2'
       with:
         workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
@@ -192,7 +192,7 @@ jobs:
 
     # ...
 
-    - uses: 'google-github-actions/auth@v1'
+    - uses: 'google-github-actions/auth@v2'
       with:
         workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
@@ -300,27 +300,6 @@ project level.
 ## Example Workflows
 
 -   [Example workflows][examples] for `create-cloud-deploy-release`
-
-## Versioning
-
-We recommend pinning to the latest available major version:
-
-```yaml
-- uses: 'google-github-actions/create-cloud-deploy-release@v1'
-```
-
-While this action attempts to follow semantic versioning, but we're ultimately
-human and sometimes make mistakes. To prevent accidental breaking changes, you
-can also pin to a specific version:
-
-```yaml
-- uses: 'google-github-actions/create-cloud-deploy-release@v1.0.0'
-```
-
-However, you will not get automatic security updates or new features without
-explicitly updating your version number. Note that we only publish `MAJOR` and
-`MAJOR.MINOR.PATCH` versions. There is **not** a floating alias for
-`MAJOR.MINOR`.
 
 
 [anthos]: https://cloud.google.com/anthos
