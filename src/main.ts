@@ -92,6 +92,9 @@ export async function run(): Promise<void> {
     const gcloudComponent = presence(getInput('gcloud_component'));
     const gcloudVersion = getInput('gcloud_version');
 
+    // Common inputs
+    const projectId = getInput('project_id');
+
     // Throw errors if inputs aren't valid
     if (!name) {
       throw new Error('No release name set.');
@@ -161,8 +164,10 @@ export async function run(): Promise<void> {
       }
     }
 
+    // Set common flags
     // Set output format to json for easy parsing
     cmd.push('--format', 'json');
+    if (projectId) cmd.push('--project', projectId);
 
     // Install gcloud if not already installed.
     const gcloudVersionRequired = gcloudVersion ? gcloudVersion : await getLatestGcloudSDKVersion();
