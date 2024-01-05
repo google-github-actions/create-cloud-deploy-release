@@ -77,10 +77,13 @@ export async function run(): Promise<void> {
     // Core inputs (required)
     const name = getInput('name');
     const deliveryPipeline = getInput('delivery_pipeline');
-    const region = getInput('region');
     const source = getInput('source');
     const buildArtifacts = getInput('build_artifacts');
     const images = parseKVString(getInput('images'));
+
+    // Common inputs
+    const projectId = getInput('project_id');
+    const region = getInput('region');
     const disableInitialRollout = getBooleanInput('disable_initial_rollout');
     const sourceStagingDir = getInput('gcs_source_staging_dir');
     const skaffoldFile = getInput('skaffold_file');
@@ -91,9 +94,6 @@ export async function run(): Promise<void> {
     const flags = getInput('flags');
     const gcloudComponent = presence(getInput('gcloud_component'));
     const gcloudVersion = getInput('gcloud_version');
-
-    // Common inputs
-    const projectId = getInput('project_id');
 
     // Throw errors if inputs aren't valid
     if (!name) {
@@ -117,6 +117,9 @@ export async function run(): Promise<void> {
     // Build base command from required inputs
     let cmd = ['deploy', 'releases', 'create', name, '--delivery-pipeline', deliveryPipeline];
 
+    if (projectId) {
+      cmd.push('--project', projectId);
+    }
     if (region) {
       cmd.push('--region', region);
     } else {
@@ -164,10 +167,8 @@ export async function run(): Promise<void> {
       }
     }
 
-    // Set common flags
     // Set output format to json for easy parsing
     cmd.push('--format', 'json');
-    if (projectId) cmd.push('--project', projectId);
 
     // Install gcloud if not already installed.
     const gcloudVersionRequired = gcloudVersion ? gcloudVersion : await getLatestGcloudSDKVersion();
