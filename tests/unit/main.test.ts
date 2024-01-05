@@ -30,6 +30,7 @@ import { run } from '../../src/main';
 const fakeInputs = {
   delivery_pipeline: 'delivery-pipeline',
   name: 'release-001',
+  project_id: '',
   region: 'us-central1',
   source: 'src',
   build_artifacts: 'artifacts.json',
@@ -167,6 +168,19 @@ describe('#run', async () => {
       images: 'image1=image1:tag1',
     });
     assert.rejects(run, 'Both `build_artifacts` and `images` inputs set - please select only one.');
+  });
+
+  it('sets project if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      project_id: 'my-test-project',
+    });
+
+    await run();
+
+    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+      '--project',
+      'my-test-project',
+    ]);
   });
 
   it('sets region if given', async (t) => {
