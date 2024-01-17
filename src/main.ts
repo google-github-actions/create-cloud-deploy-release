@@ -77,10 +77,13 @@ export async function run(): Promise<void> {
     // Core inputs (required)
     const name = getInput('name');
     const deliveryPipeline = getInput('delivery_pipeline');
-    const region = getInput('region');
     const source = getInput('source');
     const buildArtifacts = getInput('build_artifacts');
     const images = parseKVString(getInput('images'));
+
+    // Common inputs
+    const projectId = getInput('project_id');
+    const region = getInput('region');
     const disableInitialRollout = getBooleanInput('disable_initial_rollout');
     const sourceStagingDir = getInput('gcs_source_staging_dir');
     const skaffoldFile = getInput('skaffold_file');
@@ -114,6 +117,9 @@ export async function run(): Promise<void> {
     // Build base command from required inputs
     let cmd = ['deploy', 'releases', 'create', name, '--delivery-pipeline', deliveryPipeline];
 
+    if (projectId) {
+      cmd.push('--project', projectId);
+    }
     if (region) {
       cmd.push('--region', region);
     } else {

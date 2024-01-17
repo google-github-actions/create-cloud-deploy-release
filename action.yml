@@ -84,6 +84,11 @@ inputs:
       Additional parameters to supply at release creation time.
     required: false
 
+  project_id:
+    description: |-
+      The Google Cloud Project ID. If unset, this is inherited from the environment.
+    required: false
+
   flags:
     description: |-
       Space separated list of other Cloud Deploy flags, examples can be found:

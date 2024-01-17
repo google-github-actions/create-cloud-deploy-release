@@ -163,6 +163,8 @@ jobs:
     used. This is the equivalent of running 'gcloud alpha run' or 'gcloud beta
     run'. Valid values are `alpha` or `beta`.
 
+-   `project_id`: (Optional) ID of the Google Cloud project in which to deploy the service. The default value is computed from the environment.
+
 ## Outputs
 
 -   `name`: The full name of the release in Cloud Deploy, including project and
