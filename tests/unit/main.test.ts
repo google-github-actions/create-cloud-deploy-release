@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import { afterEach, beforeEach, describe, mock, it } from 'node:test';
+import { test, mock } from 'node:test';
 import assert from 'node:assert';
 
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
+import { assertMembers } from '@google-github-actions/actions-utils';
 
 import { TestToolCache } from '@google-github-actions/setup-cloud-sdk';
 
@@ -106,19 +107,19 @@ const defaultMocks = (
   };
 };
 
-describe('#run', async () => {
-  beforeEach(async () => {
+test('#run', { concurrency: true }, async (suite) => {
+  suite.beforeEach(async () => {
     await TestToolCache.start();
   });
 
-  afterEach(async () => {
+  suite.afterEach(async () => {
     delete process.env.GITHUB_REPOSITORY;
     delete process.env.GITHUB_SHA;
     delete process.env.GITHUB_SERVER_URL;
     await TestToolCache.stop();
   });
 
-  it('installs the gcloud SDK if it is not already installed', async (t) => {
+  await suite.test('installs the gcloud SDK if it is not already installed', async (t) => {
     const mocks = defaultMocks(t.mock);
     t.mock.method(setupGcloud, 'isInstalled', () => {
       return false;
@@ -129,7 +130,7 @@ describe('#run', async () => {
     assert.deepStrictEqual(mocks.installGcloudSDK.mock.callCount(), 1);
   });
 
-  it('uses the cached gcloud SDK if it was already installed', async (t) => {
+  await suite.test('uses the cached gcloud SDK if it was already installed', async (t) => {
     const mocks = defaultMocks(t.mock);
     t.mock.method(setupGcloud, 'isInstalled', () => {
       return true;
@@ -140,63 +141,66 @@ describe('#run', async () => {
     assert.deepStrictEqual(mocks.installGcloudSDK.mock.callCount(), 0);
   });
 
-  it('fails if release name is not provided', async (t) => {
+  await suite.test('fails if release name is not provided', async (t) => {
     defaultMocks(t.mock, {
       name: '',
     });
-    assert.rejects(run, 'No release name set.');
+    await assert.rejects(run, 'No release name set.');
   });
 
-  it('fails if delivery_pipeline is not provided', async (t) => {
+  await suite.test('fails if delivery_pipeline is not provided', async (t) => {
     defaultMocks(t.mock, {
       delivery_pipeline: '',
     });
-    assert.rejects(run, 'No delivery pipeline set.');
+    await assert.rejects(run, 'No delivery pipeline set.');
   });
 
-  it('fails if neither build-artifacts nor images are provided', async (t) => {
+  await suite.test('fails if neither build-artifacts nor images are provided', async (t) => {
     defaultMocks(t.mock, {
       build_artifacts: '',
       images: '',
     });
-    assert.rejects(run, 'One of `build_artifacts` and `images` inputs must be supplied.');
+    await assert.rejects(run, 'One of `build_artifacts` and `images` inputs must be supplied.');
   });
 
-  it('fails if build-artifacts and images are both provided', async (t) => {
+  await suite.test('fails if build-artifacts and images are both provided', async (t) => {
     defaultMocks(t.mock, {
       build_artifacts: 'artifacts.json',
       images: 'image1=image1:tag1',
     });
-    assert.rejects(run, 'Both `build_artifacts` and `images` inputs set - please select only one.');
+    await assert.rejects(
+      run,
+      'Both `build_artifacts` and `images` inputs set - please select only one.',
+    );
   });
 
-  it('sets project if given', async (t) => {
+  await suite.test('sets project if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       project_id: 'my-test-project',
     });
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
       '--project',
       'my-test-project',
     ]);
   });
 
-  it('sets region if given', async (t) => {
+  await suite.test('sets region if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       region: 'europe-west1',
     });
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
       '--region',
       'europe-west1',
     ]);
   });
 
-  it('sets build-artifacts if given', async (t) => {
+  await suite.test('sets build-artifacts if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       build_artifacts: 'artifacts.json',
       images: '',
@@ -204,13 +208,13 @@ describe('#run', async () => {
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
       '--build-artifacts',
       'artifacts.json',
     ]);
   });
 
-  it('sets images if given', async (t) => {
+  await suite.test('sets images if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       build_artifacts: '',
       images: 'image1=image1:tag1,image2=image2:tag2',
@@ -218,61 +222,61 @@ describe('#run', async () => {
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
       '--images',
       'image1=image1:tag1,image2=image2:tag2',
     ]);
   });
 
-  it('sets source if given', async (t) => {
+  await suite.test('sets source if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       source: './src',
     });
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), ['--source', './src']);
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), ['--source', './src']);
   });
 
-  it('sets disable-initial-rollout if given', async (t) => {
+  await suite.test('sets disable-initial-rollout if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       disable_initial_rollout: 'true',
     });
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
       '--disable-initial-rollout',
     ]);
   });
 
-  it('sets gcs-source-staging-dir if given', async (t) => {
+  await suite.test('sets gcs-source-staging-dir if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       gcs_source_staging_dir: 'source/path',
     });
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
       '--gcs-source-staging-dir',
       'source/path',
     ]);
   });
 
-  it('sets skaffold-file if given', async (t) => {
+  await suite.test('sets skaffold-file if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       skaffold_file: 'path/to/skaffold.yaml',
     });
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
       '--skaffold-file',
       'path/to/skaffold.yaml',
     ]);
   });
 
-  it('sets default annotations', async (t) => {
+  await suite.test('sets default annotations', async (t) => {
     const mocks = defaultMocks(t.mock, {
       annotations: '',
     });
@@ -283,13 +287,13 @@ describe('#run', async () => {
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
       '--annotations',
       'commit=https://github.com/test-org/test-repo/commit/abcdef123456,git-sha=abcdef123456',
     ]);
   });
 
-  it('sets default and additional annotations if given', async (t) => {
+  await suite.test('sets default and additional annotations if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       annotations: 'annotation_key=annotation_value',
     });
@@ -300,72 +304,72 @@ describe('#run', async () => {
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
       '--annotations',
       'commit=https://github.com/test-org/test-repo/commit/abcdef123456,git-sha=abcdef123456,annotation_key=annotation_value',
     ]);
   });
 
-  it('sets default labels', async (t) => {
+  await suite.test('sets default labels', async (t) => {
     const mocks = defaultMocks(t.mock, {
       labels: '',
     });
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
       '--labels',
       'managed-by=github-actions',
     ]);
   });
 
-  it('sets default and additional labels if given', async (t) => {
+  await suite.test('sets default and additional labels if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       labels: 'label_key=label_value',
     });
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
       '--labels',
       'managed-by=github-actions,label_key=label_value',
     ]);
   });
 
-  it('sets description if given', async (t) => {
+  await suite.test('sets description if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       description: 'My description',
     });
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
       '--description',
       'My description',
     ]);
   });
 
-  it('sets deploy parameters if given', async (t) => {
+  await suite.test('sets deploy parameters if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       deploy_parameters: 'param-key=param-value',
     });
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
       '--deploy-parameters',
       'param-key=param-value',
     ]);
   });
 
-  it('sets flags if given', async (t) => {
+  await suite.test('sets flags if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       flags: '--flag1=value1 --flag2=value2',
     });
 
     await run();
 
-    expectSubArray(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
+    assertMembers(mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1), [
       '--flag1',
       'value1',
       '--flag2',
@@ -373,60 +377,36 @@ describe('#run', async () => {
     ]);
   });
 
-  it('uses default components without gcloud_component flag', async (t) => {
+  await suite.test('uses default components without gcloud_component flag', async (t) => {
     const mocks = defaultMocks(t.mock);
     await run();
     assert.deepStrictEqual(mocks.installComponent.mock.callCount(), 0);
   });
 
-  it('throws error with invalid gcloud component flag', async (t) => {
+  await suite.test('throws error with invalid gcloud component flag', async (t) => {
     defaultMocks(t.mock, {
       gcloud_component: 'wrong_value',
     });
-    assert.rejects(run, 'invalid input received for gcloud_component: wrong_value');
+    await assert.rejects(run, 'invalid input received for gcloud_component: wrong_value');
   });
 
-  it('installs alpha component with alpha flag', async (t) => {
+  await suite.test('installs alpha component with alpha flag', async (t) => {
     const mocks = defaultMocks(t.mock, {
       gcloud_component: 'alpha',
     });
 
     await run();
 
-    expectSubArray(mocks.installComponent.mock.calls?.at(0)?.arguments, ['alpha']);
+    assertMembers(mocks.installComponent.mock.calls?.at(0)?.arguments, ['alpha']);
   });
 
-  it('installs beta component with beta flag', async (t) => {
+  await suite.test('installs beta component with beta flag', async (t) => {
     const mocks = defaultMocks(t.mock, {
       gcloud_component: 'beta',
     });
 
     await run();
 
-    expectSubArray(mocks.installComponent.mock.calls?.at(0)?.arguments, ['beta']);
+    assertMembers(mocks.installComponent.mock.calls?.at(0)?.arguments, ['beta']);
   });
 });
-
-const expectSubArray = (m: string[], exp: string[]) => {
-  const window = exp.length;
-  for (let i = 0; i < m.length; i++) {
-    const x = m.slice(i, i + window);
-
-    let matches = true;
-    for (let j = 0; j < exp.length; j++) {
-      if (x[j] !== exp[j]) {
-        matches = false;
-      }
-    }
-    if (matches) {
-      return true;
-    }
-  }
-
-  throw new assert.AssertionError({
-    message: 'mismatch',
-    actual: m,
-    expected: exp,
-    operator: 'subArray',
-  });
-};

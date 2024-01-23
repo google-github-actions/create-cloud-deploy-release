@@ -14,23 +14,16 @@
  * limitations under the License.
  */
 
-import { describe, it } from 'node:test';
+import { test } from 'node:test';
 import assert from 'node:assert';
 
-import { CreateCloudDeployReleaseOutputs } from '../../src/main';
 import { parseCreateReleaseResponse } from '../../src/output-parser';
 
-describe('#output-parser', async () => {
-  describe('#parseCreateReleaseResponse', async () => {
-    const cases: {
-      name: string;
-      stdout: string | undefined;
-      error?: string;
-      expected?: CreateCloudDeployReleaseOutputs;
-    }[] = [
-      {
-        name: 'parses create release outputs (with rollout)',
-        stdout: `
+test('#parseCreateReleaseResponse', { concurrency: true }, async (suite) => {
+  const cases = [
+    {
+      name: 'parses create release outputs (with rollout)',
+      stdout: `
           [
             {
               "annotations": {
@@ -162,14 +155,14 @@ describe('#output-parser', async () => {
             }
           ]
           `,
-        expected: {
-          link: 'https://console.cloud.google.com/deploy/delivery-pipelines/dummy-region1/dummy-app/releases/dummy-app-abc1234?project=dummy-project',
-          name: 'projects/dummy-project/locations/dummy-region1/deliveryPipelines/dummy-app/releases/dummy-app-abc1234',
-        },
+      expected: {
+        link: 'https://console.cloud.google.com/deploy/delivery-pipelines/dummy-region1/dummy-app/releases/dummy-app-abc1234?project=dummy-project',
+        name: 'projects/dummy-project/locations/dummy-region1/deliveryPipelines/dummy-app/releases/dummy-app-abc1234',
       },
-      {
-        name: 'parses create release outputs (without rollout)',
-        stdout: `
+    },
+    {
+      name: 'parses create release outputs (without rollout)',
+      stdout: `
           {
             "annotations": {
               "commit": "https://github.com/dummy-org/dummy-app/commit/ede1c221e4c253e7009157f1f19b3f9040a19b97"
@@ -272,44 +265,43 @@ describe('#output-parser', async () => {
             "uid": "42ea7ee3e4ce474fb1cf904614701c04"
           }
           `,
-        expected: {
-          link: 'https://console.cloud.google.com/deploy/delivery-pipelines/dummy-region1/dummy-app/releases/dummy-app-abc1234?project=dummy-project',
-          name: 'projects/dummy-project/locations/dummy-region1/deliveryPipelines/dummy-app/releases/dummy-app-abc1234',
-        },
+      expected: {
+        link: 'https://console.cloud.google.com/deploy/delivery-pipelines/dummy-region1/dummy-app/releases/dummy-app-abc1234?project=dummy-project',
+        name: 'projects/dummy-project/locations/dummy-region1/deliveryPipelines/dummy-app/releases/dummy-app-abc1234',
       },
-      {
-        name: 'fails on empty stdout',
-        stdout: '',
-        error: 'no output from create release command',
-      },
-      {
-        name: 'fails on empty array from stdout',
-        stdout: '[]',
-        error: 'no output from create release command',
-      },
-      {
-        name: 'fails on empty object from stdout',
-        stdout: '{}',
-        error: 'no output from create release command',
-      },
-      {
-        name: 'fails on invalid text from stdout',
-        stdout: 'Some text to fail',
-        error: `failed to parse create release response: unexpected token 'S', "Some text to fail" is not valid JSON, stdout: Some text to fail`,
-      },
-    ];
+    },
+    {
+      name: 'fails on empty stdout',
+      stdout: '',
+      error: 'no output from create release command',
+    },
+    {
+      name: 'fails on empty array from stdout',
+      stdout: '[]',
+      error: 'no output from create release command',
+    },
+    {
+      name: 'fails on empty object from stdout',
+      stdout: '{}',
+      error: 'no output from create release command',
+    },
+    {
+      name: 'fails on invalid text from stdout',
+      stdout: 'Some text to fail',
+      error: `failed to parse create release response: unexpected token 'S', "Some text to fail" is not valid JSON, stdout: Some text to fail`,
+    },
+  ];
 
-    cases.forEach((tc) => {
-      it(tc.name, async () => {
-        if (tc.error) {
-          assert.throws(() => {
-            parseCreateReleaseResponse(tc.stdout);
-          }, new RegExp(tc.error));
-        } else {
-          const result = parseCreateReleaseResponse(tc.stdout);
-          assert.deepStrictEqual(result, tc.expected);
-        }
-      });
+  for await (const tc of cases) {
+    await suite.test(tc.name, async () => {
+      if (tc.error) {
+        assert.throws(() => {
+          parseCreateReleaseResponse(tc.stdout);
+        }, new RegExp(tc.error));
+      } else {
+        const result = parseCreateReleaseResponse(tc.stdout);
+        assert.deepStrictEqual(result, tc.expected);
+      }
     });
-  });
+  }
 });

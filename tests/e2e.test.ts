@@ -14,85 +14,80 @@
  * limitations under the License.
  */
 
-import { before, describe, it } from 'node:test';
+import { test } from 'node:test';
 import assert from 'node:assert';
 
 import { clouddeploy_v1 } from 'googleapis';
 import { getExecOutput } from '@actions/exec';
 import yaml from 'js-yaml';
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-describe('E2E tests', async () => {
-  const { ANNOTATIONS, DELIVERY_PIPELINE, DESCRIPTION, LABELS, NAME, PROJECT_ID, REGION } =
-    process.env;
+import { skipIfMissingEnv } from '@google-github-actions/actions-utils';
 
-  let release: clouddeploy_v1.Schema$Release;
-  let toolCommand: string;
+test(
+  'e2e tests',
+  {
+    concurrency: true,
+    skip: skipIfMissingEnv('NAME', 'DELIVERY_PIPELINE', 'PROJECT_ID', 'REGION'),
+  },
+  async (suite) => {
+    let release: clouddeploy_v1.Schema$Release;
 
-  before(async () => {
-    toolCommand = 'gcloud';
-    if (NAME && DELIVERY_PIPELINE && PROJECT_ID && REGION) {
-      // get Service yaml
-      const cmd = [
+    suite.before(async () => {
+      const args = [
         'deploy',
         'releases',
         'describe',
-        NAME,
+        process.env.NAME!,
         '--delivery-pipeline',
-        DELIVERY_PIPELINE,
+        process.env.DELIVERY_PIPELINE!,
         '--project',
-        PROJECT_ID,
+        process.env.PROJECT_ID!,
         '--format',
         'yaml',
         '--region',
-        REGION,
+        process.env.REGION!,
       ];
 
-      const options = { silent: true, ignoreReturnCode: true };
-      const commandString = `${toolCommand} ${cmd.join(' ')}`;
-      const output = await getExecOutput(toolCommand, cmd, options);
-      if (output.exitCode !== 0) {
-        const errMsg =
-          output.stderr || `command exited ${output.exitCode}, but stderr had no output`;
-        throw new Error(`failed to execute gcloud command \`${commandString}\`: ${errMsg}`);
-      }
-
+      const output = await getExecOutput('gcloud', args);
       release = yaml.load(output.stdout) as clouddeploy_v1.Schema$Release;
-      if (!release) console.error('no release found');
-    }
-  });
 
-  it('has the correct annotations', async () => {
-    if (ANNOTATIONS && release) {
-      const expected = JSON.parse(ANNOTATIONS);
-      const actual = release?.annotations || {};
+      if (!release) {
+        throw new Error('failed to find release');
+      }
+    });
 
-      // Filter out only the keys we care about
-      const subset = Object.assign({}, ...Object.keys(expected).map((k) => ({ [k]: actual[k] })));
+    await suite.test(
+      'has the correct annotations',
+      { skip: skipIfMissingEnv('ANNOTATIONS') },
+      async () => {
+        const expected = JSON.parse(process.env.ANNOTATIONS!);
+        const actual = release?.annotations || {};
 
-      assert.deepStrictEqual(subset, expected);
-    }
-  });
+        // Filter out only the keys we care about
+        const subset = Object.assign({}, ...Object.keys(expected).map((k) => ({ [k]: actual[k] })));
 
-  it('has the correct description', async () => {
-    if (DESCRIPTION && release) {
-      const actual = release?.description;
-      assert.deepStrictEqual(actual, DESCRIPTION);
-    }
-  });
+        assert.deepStrictEqual(subset, expected);
+      },
+    );
 
-  it('has the correct name', async () => {
-    if (NAME && release) {
+    await suite.test(
+      'has the correct description',
+      { skip: skipIfMissingEnv('DESCRIPTION') },
+      async () => {
+        const actual = release?.description;
+        assert.deepStrictEqual(actual, process.env.DESCRIPTION!);
+      },
+    );
+
+    await suite.test('has the correct name', { skip: skipIfMissingEnv('NAME') }, async () => {
       const actual = release?.name;
-      assert.deepStrictEqual(actual, NAME);
-    }
-  });
+      assert.deepStrictEqual(actual, process.env.NAME!);
+    });
 
-  it('has the correct labels', async () => {
-    if (LABELS && release) {
-      const expected = JSON.parse(LABELS);
+    await suite.test('has the correct labels', { skip: skipIfMissingEnv('LABELS') }, async () => {
+      const expected = JSON.parse(process.env.LABELS!);
       const actual = release?.labels;
       assert.deepStrictEqual(actual, expected);
-    }
-  });
-});
+    });
+  },
+);
