@@ -366,11 +366,11 @@ test('#run', { concurrency: true }, async (suite) => {
     const mocks = defaultMocks(t.mock);
 
     await run();
-    
+
     const execArguments = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     assert(execArguments);
     assert(!execArguments?.includes('--deploy-parameters'));
-});
+  });
 
   await suite.test('sets flags if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
