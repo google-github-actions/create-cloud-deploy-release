@@ -147,7 +147,7 @@ export async function run(): Promise<void> {
     if (skaffoldFile) {
       cmd.push('--skaffold-file', skaffoldFile);
     }
-    if (!(Object.keys(deployParameters).length === 0)) {
+    if (deployParameters && Object.keys(deployParameters).length > 0) {
       cmd.push('--deploy-parameters', joinKVString(deployParameters));
     }
 
