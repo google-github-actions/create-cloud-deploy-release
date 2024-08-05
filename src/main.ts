@@ -48,7 +48,6 @@ import {
 import { getDefaultAnnotations, getDefaultLabels } from './utils';
 import { parseCreateReleaseResponse } from './output-parser';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version: appVersion } = require('../package.json');
 
 /**
@@ -102,10 +101,10 @@ export async function run(): Promise<void> {
     if (!deliveryPipeline) {
       throw new Error('No delivery pipeline set.');
     }
-    if (!buildArtifacts && !Object.keys(images)?.length) {
+    if (!buildArtifacts && !images) {
       throw new Error('One of `build_artifacts` and `images` inputs must be supplied.');
     }
-    if (buildArtifacts && Object.keys(images)?.length) {
+    if (buildArtifacts && images) {
       throw new Error('Both `build_artifacts` and `images` inputs set - please select only one.');
     }
 
