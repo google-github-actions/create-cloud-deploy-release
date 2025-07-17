@@ -20,7 +20,7 @@ spec:
   template:
     spec:
       containers:
-      - name: 'gha-test-app'
-        image: 'gha-test-app'
+        - name: 'gha-test-app'
+          image: 'gha-test-app'
     scaling:
       maxInstanceCount: '1'

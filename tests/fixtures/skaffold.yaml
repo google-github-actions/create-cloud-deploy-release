@@ -17,9 +17,9 @@ kind: 'Config'
 metadata:
   name: 'gha-test'
 profiles:
-- name: 'gha-test'
-  manifests:
-    rawYaml:
-    - 'gha-test-app.yaml'
+  - name: 'gha-test'
+    manifests:
+      rawYaml:
+        - 'gha-test-app.yaml'
 deploy:
   cloudrun: {}
