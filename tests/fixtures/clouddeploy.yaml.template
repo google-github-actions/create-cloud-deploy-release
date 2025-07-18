@@ -19,10 +19,12 @@ metadata:
 description: 'Deployment pipeline for GitHub Action tests'
 serialPipeline:
   stages:
-  - targetId: 'gha-test-target'
-    profiles: ['gha-test']
+    - targetId: 'gha-test-target'
+      profiles: ['gha-test']
+
+# yamllint disable-line rule:document-start
 ---
-apiVersion: deploy.cloud.google.com/v1
+apiVersion: 'deploy.cloud.google.com/v1'
 kind: 'Target'
 metadata:
   name: 'gha-test-target'

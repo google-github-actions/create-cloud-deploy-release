@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Create Cloud Deploy Release
-author: Google LLC
+name: 'Create Cloud Deploy Release'
+author: 'Google LLC'
 description: |-
   Use this action to create a release in Cloud Deploy.
 
@@ -112,12 +112,12 @@ inputs:
 
 outputs:
   name:
-    description:
+    description: |-
       The full name of the release in Cloud Deploy, including project and
       pipeline names, as well as the chosen name of the release itself.
 
   link:
-    description:
+    description: |-
       A link to the Cloud Deploy release in the Google Cloud Web Console.
 
 branding:
