@@ -54,7 +54,7 @@ jobs:
 
       - id: 'auth'
         name: 'Auth'
-        uses: 'google-github-actions/auth@v2' # ratchet:exclude
+        uses: 'google-github-actions/auth@v3' # ratchet:exclude
         with:
           workload_identity_provider: '${{ vars.WIF_PROVIDER_NAME }}'
           service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'

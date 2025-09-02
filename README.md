@@ -17,7 +17,7 @@ support](https://cloud.google.com/support).**
     the secrets being requested. See [Authorization](#authorization) for more
     information.
 
--   This action runs using Node 20. If you are using self-hosted GitHub Actions
+-   This action runs using Node 24. If you are using self-hosted GitHub Actions
     runners, you must use runner version
     [2.285.0](https://github.com/actions/virtual-environments) or newer.
 
@@ -39,13 +39,13 @@ jobs:
     steps:
     - uses: 'actions/checkout@v4'
 
-    - uses: 'google-github-actions/auth@v2'
+    - uses: 'google-github-actions/auth@v3'
       with:
         workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
    - id: create-release
-     uses: 'google-github-actions/create-cloud-deploy-release@v1'
+     uses: 'google-github-actions/create-cloud-deploy-release@v2'
       with:
         name: 'demo-app-v1-2-3'
         description: 'Add new functionality to demo-app'
@@ -194,12 +194,12 @@ jobs:
 
     # ...
 
-    - uses: 'google-github-actions/auth@v2'
+    - uses: 'google-github-actions/auth@v3'
       with:
         workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
-    - uses: 'google-github-actions/create-cloud-deploy-release@v1'
+    - uses: 'google-github-actions/create-cloud-deploy-release@v2'
       with:
         name: 'example-app'
         ...
@@ -218,7 +218,7 @@ jobs:
     steps:
     # ...
 
-    - uses: 'google-github-actions/create-cloud-deploy-release@v1'
+    - uses: 'google-github-actions/create-cloud-deploy-release@v2'
       with:
         name: 'example-app'
         ...
